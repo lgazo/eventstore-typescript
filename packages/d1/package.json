@@ -1,0 +1,43 @@
+{
+  "name": "@ricofritzsche/eventstore-d1",
+  "version": "1.1.0",
+  "description": "Cloudflare D1-backed store for @ricofritzsche/eventstore",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist/**/*",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "build:watch": "tsc -p tsconfig.json --watch",
+    "clean": "rm -rf dist",
+    "prepack": "npm run build",
+    "prepublishOnly": "npm run clean && npm run build"
+  },
+  "keywords": [
+    "eventstore",
+    "event-sourcing",
+    "cloudflare",
+    "d1",
+    "sqlite",
+    "event-driven"
+  ],
+  "author": "Rico Fritzsche",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ricofritzsche/eventstore-typescript"
+  },
+  "bugs": {
+    "url": "https://github.com/ricofritzsche/eventstore-typescript/issues"
+  },
+  "homepage": "https://github.com/ricofritzsche/eventstore-typescript#readme",
+  "dependencies": {
+    "@ricofritzsche/eventstore": "*"
+  },
+  "engines": {
+    "node": ">=18.19.0"
+  }
+}

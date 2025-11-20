@@ -13,11 +13,12 @@
     "packages/*"
   ],
   "scripts": {
-    "build": "npm run build:core && npm run build:postgres",
+    "build": "npm run build:core && npm run build:postgres && npm run build:d1",
     "build:core": "tsc",
     "build:postgres": "npm run build -w ./packages/postgres",
+    "build:d1": "npm run build -w ./packages/d1",
     "build:watch": "tsc --watch",
-    "clean": "rm -rf dist packages/postgres/dist",
+    "clean": "rm -rf dist packages/postgres/dist packages/d1/dist",
     "dev": "ts-node src/index.ts",
     "example": "ts-node -r tsconfig-paths/register src/examples/banking/cli.ts",
     "simple": "ts-node -r tsconfig-paths/register simple.ts",

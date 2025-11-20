@@ -10,10 +10,14 @@ This package is a collaboration between [Ralf Westphal](https://github.com/ralfw
 ## Installation
 
 ```bash
+# PostgreSQL-backed store
 npm install @ricofritzsche/eventstore @ricofritzsche/eventstore-postgres
+
+# Cloudflare D1-backed store
+npm install @ricofritzsche/eventstore @ricofritzsche/eventstore-d1
 ```
 
-> Install `@ricofritzsche/eventstore-postgres` when you need the PostgreSQL-backed store.
+> Install the adapter that matches your persistence choice (`eventstore-postgres` or `eventstore-d1`).
 
 **NPM Package:** https://www.npmjs.com/package/@ricofritzsche/eventstore
 
@@ -21,13 +25,14 @@ npm install @ricofritzsche/eventstore @ricofritzsche/eventstore-postgres
 
 - `@ricofritzsche/eventstore` – Core types, filters, in-memory store, and notifiers
 - `@ricofritzsche/eventstore-postgres` – PostgreSQL-backed implementation that builds on the core APIs
+- `@ricofritzsche/eventstore-d1` – Cloudflare D1 (SQLite) implementation for Workers environments
 
 ## High-Level Architecture
 
 The system is built around a core EventStore with pluggable notification system.
 
 ### **EventStore** - The Source of Truth
-- **Persistent Storage**: Events are immutably stored in PostgreSQL
+- **Persistent Storage**: Events are immutably stored in PostgreSQL or Cloudflare D1
 - **Query Engine**: Fast retrieval with filtering and payload-based queries
 - **Optimistic Locking**: Ensures consistency without traditional database locks
 - **Auto-Notification**: Automatically notifies subscribers when events are appended
@@ -48,6 +53,7 @@ The system is built around a core EventStore with pluggable notification system.
 **Key Components**:
 - **`types.ts`** - Core interfaces (Event, EventStore, EventQuery, EventStreamNotifier)
 - **PostgreSQL adapter** - Provided via the `@ricofritzsche/eventstore-postgres` workspace package
+- **Cloudflare D1 adapter** - Provided via the `@ricofritzsche/eventstore-d1` workspace package
 - **`stores/memory/`** - In-memory implementation of EventStore with subscription support
 - **`notifiers/memory/`** - In-memory notification system (default)
 - **`filter/`** - Event filters and queries
@@ -55,7 +61,7 @@ The system is built around a core EventStore with pluggable notification system.
 **Responsibilities**:
 - Store events immutably in storage medium, e.g. PostgreSQL database or in-memory
 - Query events with complex filtering using EventQuery
-- Provide atomic consistency through optimistic locking (with CTE-based approach (Postgres))
+- Provide atomic consistency through optimistic locking (CTE-based for Postgres, transactional for D1)
 - Notify subscribers immediately when events are appended
 - Manage subscription lifecycle
 
@@ -93,8 +99,8 @@ The system is built around a core EventStore with pluggable notification system.
 │                                     │                            │             │
 │                                     ▼                            ▼             │
 │  ┌─────────────┐            ┌─────────────┐              ┌─────────────┐       │
-│  │  PostgreSQL │            │   Events    │              │  Multiple   │       │
-│  │  Database   │            │   Saved     │              │ Subscribers │       │
+│  │ PostgreSQL/│            │   Events    │              │  Multiple   │       │
+│  │    D1 DB   │            │   Saved     │              │ Subscribers │       │
 │  └─────────────┘            └─────────────┘              └─────────────┘       │
 │                                                                   │            │
 │                                                                   ▼            │
@@ -171,16 +177,25 @@ docker run --name eventstore-postgres -e POSTGRES_PASSWORD=postgres -e POSTGRES_
 
 # Set connection string
 export DATABASE_URL="postgres://postgres:postgres@localhost:5432/bank"
+
+# Or configure Cloudflare D1 (example with Wrangler)
+# wrangler d1 create eventstore
+# wrangler d1 migrations apply eventstore
 ```
 
 ### 2. EventQuery
 ```typescript
 import { MemoryEventStore, createQuery, createFilter } from '@ricofritzsche/eventstore';
 import { PostgresEventStore } from '@ricofritzsche/eventstore-postgres';
+import { D1EventStore } from '@ricofritzsche/eventstore-d1';
 
 // Postgres
-const eventStore = new PostgresEventStore( {connectionstring: "..."} ); 
+const eventStore = new PostgresEventStore({ connectionString: "..." }); 
 await eventStore.initializeDatabase();
+
+// Cloudflare D1 (Workers binding)
+// const eventStore = new D1EventStore({ database: env.EVENTSTORE });
+// await eventStore.initializeDatabase();
 
 // In-memory
 // const eventStore = new MemoryEventStore();
@@ -218,7 +233,7 @@ const specificResult = await eventStore.query(specificUserQuery);
 
 ### 3. Atomic Consistency with Optimistic Locking
 
-The EventStore provides atomic consistency through optimistic locking using Common Table Expressions (CTEs (Postgres)). 
+The EventStore provides atomic consistency through optimistic locking using database-specific techniques (CTEs for Postgres, wrapped transactions for D1). 
 This approach ensures that concurrent operations only conflict when they actually depend on the same event context, rather than using traditional aggregate-level locking.
 
 ```typescript
@@ -274,6 +289,8 @@ SELECT event_type, payload, (max_seq + row_number())
 FROM context, unnest($1) AS new_events
 WHERE COALESCE(max_seq, 0) = $2
 ```
+
+Cloudflare D1 performs the same optimistic check inside a single transaction: it selects the current max sequence for the query context and rolls back if the expectation does not match before inserting the new events.
 
 ### 4. Event Subscription
 ```typescript
@@ -346,6 +363,29 @@ class PostgresEventStore {
   async subscribe(handle: HandleEvents): Promise<EventSubscription>
   
   // Clean up resources
+  async close(): Promise<void>
+}
+```
+
+### D1EventStore (`@ricofritzsche/eventstore-d1`)
+
+The Cloudflare D1-backed store targets Workers environments that expose a D1 binding. It mirrors the Postgres API but uses SQLite transactions behind the scenes.
+
+```typescript
+class D1EventStore {
+  constructor(options: D1EventStoreOptions)
+
+  async initializeDatabase(): Promise<void>
+
+  async query(eventQuery: EventQuery): Promise<QueryResult>
+  async query(eventFilter: EventFilter): Promise<QueryResult>
+
+  async append(events: Event[]): Promise<void>
+  async append(events: Event[], filterCriteria: EventQuery, expectedMaxSequenceNumber: number): Promise<void>
+  async append(events: Event[], filterCriteria: EventFilter, expectedMaxSequenceNumber: number): Promise<void>
+
+  async subscribe(handle: HandleEvents): Promise<EventSubscription>
+
   async close(): Promise<void>
 }
 ```
