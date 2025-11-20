@@ -35,7 +35,7 @@
   },
   "homepage": "https://github.com/ricofritzsche/eventstore-typescript#readme",
   "dependencies": {
-    "@ricofritzsche/eventstore": "*"
+    "@ricofritzsche/eventstore": "lgazo/eventstore-typescript#main"
   },
   "engines": {
     "node": ">=18.19.0"

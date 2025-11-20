@@ -35,7 +35,7 @@
   "homepage": "https://github.com/ricofritzsche/eventstore-typescript#readme",
   "dependencies": {
     "pg": "^8.11.0",
-    "@ricofritzsche/eventstore": "*"
+    "@ricofritzsche/eventstore": "lgazo/eventstore-typescript#main"
   },
   "devDependencies": {
     "@types/pg": "^8.10.0"
