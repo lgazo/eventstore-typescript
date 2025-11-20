@@ -1,5 +1,5 @@
 import { compileContextQueryConditions } from '../sql';
-import { createFilter, createQuery } from '../../../filter';
+import { createFilter, createQuery } from '@ricofritzsche/eventstore';
 
 describe('Conditions compiler', () => {
   describe('single filter', () => {

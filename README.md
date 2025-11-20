@@ -10,10 +10,17 @@ This package is a collaboration between [Ralf Westphal](https://github.com/ralfw
 ## Installation
 
 ```bash
-npm install @ricofritzsche/eventstore
+npm install @ricofritzsche/eventstore @ricofritzsche/eventstore-postgres
 ```
 
+> Install `@ricofritzsche/eventstore-postgres` when you need the PostgreSQL-backed store.
+
 **NPM Package:** https://www.npmjs.com/package/@ricofritzsche/eventstore
+
+## Workspace Packages
+
+- `@ricofritzsche/eventstore` – Core types, filters, in-memory store, and notifiers
+- `@ricofritzsche/eventstore-postgres` – PostgreSQL-backed implementation that builds on the core APIs
 
 ## High-Level Architecture
 
@@ -40,7 +47,7 @@ The system is built around a core EventStore with pluggable notification system.
 
 **Key Components**:
 - **`types.ts`** - Core interfaces (Event, EventStore, EventQuery, EventStreamNotifier)
-- **`stores/postgres/`** - PostgreSQL implementation of EventStore with subscription support
+- **PostgreSQL adapter** - Provided via the `@ricofritzsche/eventstore-postgres` workspace package
 - **`stores/memory/`** - In-memory implementation of EventStore with subscription support
 - **`notifiers/memory/`** - In-memory notification system (default)
 - **`filter/`** - Event filters and queries
@@ -157,7 +164,7 @@ The subscription system enables real-time, concurrent processing:
 ### 1. Setup
 ```bash
 # Install the package
-npm install @ricofritzsche/eventstore
+npm install @ricofritzsche/eventstore @ricofritzsche/eventstore-postgres
 
 # Start Postgres
 docker run --name eventstore-postgres -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=bank -p 5432:5432 -d postgres:15
@@ -168,7 +175,8 @@ export DATABASE_URL="postgres://postgres:postgres@localhost:5432/bank"
 
 ### 2. EventQuery
 ```typescript
-import { PostgresEventStore, MemoryEventStore, createQuery, createFilter } from '@ricofritzsche/eventstore';
+import { MemoryEventStore, createQuery, createFilter } from '@ricofritzsche/eventstore';
+import { PostgresEventStore } from '@ricofritzsche/eventstore-postgres';
 
 // Postgres
 const eventStore = new PostgresEventStore( {connectionstring: "..."} ); 
@@ -269,7 +277,8 @@ WHERE COALESCE(max_seq, 0) = $2
 
 ### 4. Event Subscription
 ```typescript
-import { PostgresEventStore, createQuery, createFilter } from '@ricofritzsche/eventstore';
+import { createQuery, createFilter } from '@ricofritzsche/eventstore';
+import { PostgresEventStore } from '@ricofritzsche/eventstore-postgres';
 
 // Create EventStore with default MemoryEventStreamNotifier
 const eventStore = new PostgresEventStore({connectionstring: "..."});
@@ -298,7 +307,8 @@ const subscription = await eventStore.subscribe(async (events) => {
 Replace the notification system with your own:
 
 ```typescript
-import { EventStreamNotifier, PostgresEventStore } from '@ricofritzsche/eventstore';
+import { EventStreamNotifier } from '@ricofritzsche/eventstore';
+import { PostgresEventStore } from '@ricofritzsche/eventstore-postgres';
 
 class DatabaseEventStreamNotifier implements EventStreamNotifier {
   // Custom implementation using database triggers, message queues, etc.
@@ -312,9 +322,9 @@ const eventStore = new PostgresEventStore({
 
 ## API Reference
 
-### PostgresEventStore
+### PostgresEventStore (`@ricofritzsche/eventstore-postgres`)
 
-The main event store implementation with PostgreSQL persistence.
+The PostgreSQL-backed store is distributed via the `@ricofritzsche/eventstore-postgres` workspace package and depends on `@ricofritzsche/eventstore` for core types.
 
 ```typescript
 class PostgresEventStore {

@@ -9,13 +9,18 @@
     "README.md",
     "LICENSE"
   ],
+  "workspaces": [
+    "packages/*"
+  ],
   "scripts": {
-    "build": "tsc",
+    "build": "npm run build:core && npm run build:postgres",
+    "build:core": "tsc",
+    "build:postgres": "npm run build -w ./packages/postgres",
     "build:watch": "tsc --watch",
-    "clean": "rm -rf dist",
+    "clean": "rm -rf dist packages/postgres/dist",
     "dev": "ts-node src/index.ts",
-    "example": "ts-node src/examples/banking/cli.ts",
-    "simple": "ts-node simple.ts",
+    "example": "ts-node -r tsconfig-paths/register src/examples/banking/cli.ts",
+    "simple": "ts-node -r tsconfig-paths/register simple.ts",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
@@ -48,7 +53,6 @@
   "devDependencies": {
     "@types/jest": "^29.5.0",
     "@types/node": "^20.0.0",
-    "@types/pg": "^8.10.0",
     "@typescript-eslint/eslint-plugin": "^8.0.0",
     "@typescript-eslint/parser": "^8.0.0",
     "eslint": "^9.0.0",
@@ -58,11 +62,11 @@
     "prettier": "^3.0.0",
     "ts-jest": "^29.2.0",
     "ts-node": "^10.9.0",
+    "tsconfig-paths": "^4.2.0",
     "typescript": "^5.0.0"
   },
   "dependencies": {
     "dotenv": "^17.0.1",
-    "pg": "^8.11.0",
     "uuid": "^11.1.0"
   },
   "engines": {

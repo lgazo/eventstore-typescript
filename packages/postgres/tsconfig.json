@@ -27,20 +27,17 @@
     "emitDecoratorMetadata": true,
     "baseUrl": ".",
     "paths": {
-      "@ricofritzsche/eventstore": ["src/index.ts"],
-      "@ricofritzsche/eventstore/*": ["src/*"],
-      "@ricofritzsche/eventstore-postgres": ["packages/postgres/src"],
-      "@ricofritzsche/eventstore-postgres/*": ["packages/postgres/src/*"]
+      "@ricofritzsche/eventstore": ["../../dist/index"],
+      "@ricofritzsche/eventstore/*": ["../../dist/*"]
     }
   },
   "include": [
-    "src/eventstore/**/*",
-    "src/index.ts"
+    "src/**/*.ts"
   ],
   "exclude": [
     "node_modules",
     "dist",
     "**/*.test.ts",
-    "**/*.spec.ts",
+    "**/*.spec.ts"
   ]
 }
