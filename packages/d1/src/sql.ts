@@ -12,7 +12,7 @@ export function buildContextQuerySql(query?: EventQuery): SqlQuery {
   if (query) {
     const eventTypes = collectEventTypes(query);
     if (eventTypes.length > 0) {
-      const placeholders = eventTypes.map(() => '?').join(', ');
+      const placeholders = eventTypes.map(() => '\'?\'').join(', ');
       clauses.push(`event_type IN (${placeholders})`);
       params.push(...eventTypes);
     }

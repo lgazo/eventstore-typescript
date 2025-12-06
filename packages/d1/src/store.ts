@@ -22,7 +22,7 @@ import { CREATE_EVENTS_TABLE, CREATE_EVENT_TYPE_INDEX, CREATE_OCCURRED_AT_INDEX 
 const NON_EXISTENT_EVENT_TYPE = '__NON_EXISTENT__' + Math.random().toString(36);
 const INSERT_EVENT_SQL = `
   INSERT INTO events (event_type, payload)
-  VALUES (?1, ?2)
+  VALUES ('?1', json('?2'))
   RETURNING sequence_number, occurred_at, event_type, payload
 `;
 
@@ -111,6 +111,7 @@ export class D1EventStore implements EventStore {
     }
   }
 
+  // AFAIK this won't work with CF
   async initializeDatabase(): Promise<void> {
     await this.exec(CREATE_EVENTS_TABLE);
     await this.exec(CREATE_EVENT_TYPE_INDEX);
@@ -163,12 +164,13 @@ export class D1EventStore implements EventStore {
   }
 
   private async executeAll<T>(sql: string, params: unknown[] = []): Promise<T[]> {
+    console.log(`[d1 store] executeAll (${params.length}) ${sql}<<`, params);
     const statement = this.db.prepare(sql);
     if (params.length > 0) {
       statement.bind(...params);
     }
 
-    const result = await statement.all<T>();
+    const result = await statement.run<T>();
     if (!result.success) {
       throw new Error(`eventstore-stores-d1-err04: Query failed: ${result.error ?? 'Unknown error'}`);
     }
@@ -177,19 +179,20 @@ export class D1EventStore implements EventStore {
   }
 
   private async beginTransaction(): Promise<void> {
-    await this.exec('BEGIN IMMEDIATE TRANSACTION');
+    // await this.exec('BEGIN IMMEDIATE TRANSACTION');
   }
 
   private async commitTransaction(): Promise<void> {
-    await this.exec('COMMIT');
+    // await this.exec('COMMIT');
   }
 
   private async rollbackTransaction(): Promise<void> {
-    await this.exec('ROLLBACK');
+    // await this.exec('ROLLBACK');
   }
 
   private async exec(sql: string): Promise<void> {
-    const result = await this.db.exec(sql);
+    console.log(`[d1 store] exec ${sql}`, this.db);
+    const result = await this.db.prepare(sql).run();
     if (!result.success) {
       throw new Error(`eventstore-stores-d1-err05: Statement failed: ${result.error ?? 'Unknown error'}`);
     }
