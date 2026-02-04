@@ -8,9 +8,24 @@ import { ReadWriteLockFIFO } from "./readwritelock"
 
 
 export class MemoryEventStore implements EventStore {
-  private eventStream = new EventStream();
+  protected eventStream = new EventStream();
   private notifier: EventStreamNotifier = new MemoryEventStreamNotifier();
   private lock: ReadWriteLockFIFO = new ReadWriteLockFIFO();
+
+  getStream(): EventStream {
+    return this.eventStream;
+  }
+
+  setStream(stream: EventStream) {
+    this.eventStream = stream;
+  }
+
+  getNotifier(): EventStreamNotifier {
+    return this.notifier;
+  }
+  setNotifier(notifier: EventStreamNotifier) {
+    this.notifier = notifier;
+  }
 
   async query(): Promise<QueryResult>;
   async query(eventQuery: EventQuery): Promise<QueryResult>;
