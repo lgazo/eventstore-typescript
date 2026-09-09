@@ -29,29 +29,31 @@ The EventStore module provides the core functionality for storing and retrieving
 
 **`index.ts`** - Entry point that exports everything you need
 
-### PostgreSQL Implementation (`stores/postgres/` folder)
+### PostgreSQL Implementation (`postgres` package)
 
-**`store.ts`** - The main PostgreSQL implementation:
-- `PostgresEventStore` - Saves events to PostgreSQL database
+The PostgreSQL-backed store now lives inside the `packages/postgres` workspace package and imports the core APIs from `@ricofritzsche/eventstore`.
+
+**`src/store.ts`** - The main PostgreSQL implementation:
+- `PostgresEventStore` - Saves events to PostgreSQL database (available from the `postgres` package)
 - Handles database connections and transactions
 - **Includes subscription support** via configurable notifiers
 - **Automatically notifies subscribers** when events are appended
 
-**`schema.ts`** - Database setup:
+**`src/schema.ts`** - Database setup:
 - Creates the events table
 - Sets up indexes for fast searching
 - Manages database creation
 
-**`query.ts`** - How to find events:
+**`src/sql.ts`** - How to find events:
 - Builds SQL queries to search for events
 - Handles filtering by event type and content
 
-**`insert.ts`** - How to save events:
+**`src/store.ts`** (append helpers) - How to save events:
 - Builds SQL queries to insert new events
 - Ensures events are saved in correct order
 - **Returns inserted events** for notification
 
-**`transform.ts`** - Data conversion:
+**`src/transform.ts`** - Data conversion:
 - Converts database rows to EventRecord objects
 - Prepares events for database storage
 
@@ -75,7 +77,8 @@ The EventStore module provides the core functionality for storing and retrieving
 ## Simple Example
 
 ```typescript
-import { PostgresEventStore, createFilter } from './eventstore';
+import { createFilter } from '@ricofritzsche/eventstore';
+import { PostgresEventStore } from '@ricofritzsche/eventstore-postgres';
 
 // Create event store with default MemoryEventStreamNotifier
 const eventStore = new PostgresEventStore();
@@ -113,7 +116,8 @@ await eventStore.close();
 You can provide your own notifier implementation:
 
 ```typescript
-import { EventStreamNotifier } from './types';
+import { EventStreamNotifier } from '@ricofritzsche/eventstore';
+import { PostgresEventStore } from '@ricofritzsche/eventstore-postgres';
 
 class DatabaseEventStreamNotifier implements EventStreamNotifier {
   // Your custom implementation

@@ -1,5 +1,5 @@
 import { buildContextQuerySql, buildAppendSql } from '../sql';
-import { createFilter, createQuery } from '../../../filter';
+import { createFilter, createQuery } from '@ricofritzsche/eventstore';
 
 describe('Sql builder', () => {
   describe('query', () => {

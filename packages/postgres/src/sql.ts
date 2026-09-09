@@ -1,4 +1,4 @@
-import { EventFilter, EventQuery } from '../../types';
+import { EventFilter, EventQuery } from '@ricofritzsche/eventstore';
 
 
 export function compileContextQueryConditions(query: EventQuery, paramsBaseIndex: number = 0): { sql: string; params: unknown[] } {

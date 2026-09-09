@@ -1,5 +1,5 @@
 import { QueryResult } from 'pg';
-import { EventRecord, Event } from '../../types';
+import { EventRecord, Event } from '@ricofritzsche/eventstore';
 
 function toSequenceNumber(value: unknown): number {
   const parsed = typeof value === 'number' ? value : Number(value);

@@ -7,7 +7,10 @@ import {
   EventSubscription,
   EventQuery,
   EventFilter,
-} from '../../types';
+  MemoryEventStreamNotifier,
+  createFilter,
+  createQuery,
+} from '@ricofritzsche/eventstore';
 import { buildContextQuerySql, buildAppendSql } from './sql';
 import { mapRecordsToEvents, extractMaxSequenceNumber, prepareInsertParams } from './transform';
 import {
@@ -19,8 +22,6 @@ import {
   changeDatabaseInConnectionString,
   getDatabaseNameFromConnectionString
 } from './schema';
-import { createFilter, createQuery} from '../../filter';
-import { MemoryEventStreamNotifier } from '../../notifiers';
 
 import { Pool } from 'pg';
 

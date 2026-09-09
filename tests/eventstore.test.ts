@@ -1,4 +1,5 @@
-import { PostgresEventStore, createFilter, Event } from '../src/eventstore';
+import { createFilter, Event } from '../src/eventstore';
+import { PostgresEventStore } from '@ricofritzsche/eventstore-postgres';
 import dotenv from 'dotenv';
 
 dotenv.config();
