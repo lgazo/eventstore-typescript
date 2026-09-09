@@ -1,4 +1,4 @@
-import { createFilter, createQuery } from '../../../filter';
+import { createFilter, createQuery } from '@ricofritzsche/eventstore';
 import { SupabaseClientLike, SupabaseEventStore, parseSupabaseConnectionString } from '../store';
 
 class MockRealtimeChannel {

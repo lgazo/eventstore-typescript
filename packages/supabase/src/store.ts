@@ -8,10 +8,10 @@ import {
   EventSubscription,
   HandleEvents,
   QueryResult,
-} from '../../types';
-import { createFilter, createQuery } from '../../filter';
-import { MemoryEventStreamNotifier } from '../../notifiers';
-import { processQuery } from '../memory/queryprocessor';
+} from '@ricofritzsche/eventstore';
+import { createFilter, createQuery } from '@ricofritzsche/eventstore';
+import { MemoryEventStreamNotifier } from '@ricofritzsche/eventstore';
+import { processQuery } from '@ricofritzsche/eventstore';
 import { deserializeEvent } from './transform';
 
 const NON_EXISTENT_EVENT_TYPE = '__NON_EXISTENT__' + Math.random().toString(36);

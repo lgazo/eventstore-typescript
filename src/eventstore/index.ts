@@ -1,6 +1,6 @@
 export { MemoryEventStore } from './stores/memory';
-export { SupabaseEventStore, SupabaseEventStoreOptions, parseSupabaseConnectionString, createSupabaseSetupSql } from './stores/supabase';
 export { EventStream } from './stores/memory/eventstream';
+export { processQuery } from './stores/memory/queryprocessor';
 
 export { MemoryEventStreamNotifier } from './notifiers';
 

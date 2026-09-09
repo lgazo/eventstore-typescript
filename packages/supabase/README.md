@@ -1,4 +1,4 @@
-# SupabaseEventStore
+# @ricofritzsche/eventstore-supabase
 
 This store persists events in a Supabase Postgres table and is designed to work in browser-based SPA applications.
 
@@ -89,7 +89,7 @@ The script creates:
 ### A) Shared stream (no `tenantId`)
 
 ```ts
-import { SupabaseEventStore } from '@ricofritzsche/eventstore';
+import { SupabaseEventStore } from '@ricofritzsche/eventstore-supabase';
 
 const store = new SupabaseEventStore({
   supabaseUrl: 'https://YOUR_PROJECT_ID.supabase.co',
@@ -101,7 +101,7 @@ const store = new SupabaseEventStore({
 ### B) Tenant-scoped stream (`tenantId`)
 
 ```ts
-import { SupabaseEventStore } from '@ricofritzsche/eventstore';
+import { SupabaseEventStore } from '@ricofritzsche/eventstore-supabase';
 
 const store = new SupabaseEventStore({
   supabaseUrl: 'https://YOUR_PROJECT_ID.supabase.co',
@@ -115,7 +115,7 @@ Example with Supabase login (email/password) before creating the store:
 
 ```ts
 import { createClient } from '@supabase/supabase-js';
-import { SupabaseEventStore } from '@ricofritzsche/eventstore';
+import { SupabaseEventStore } from '@ricofritzsche/eventstore-supabase';
 
 const supabaseUrl = 'https://YOUR_PROJECT_ID.supabase.co';
 const supabaseAnonKey = 'YOUR_ANON_KEY';
@@ -144,7 +144,7 @@ const store = new SupabaseEventStore({
 ### C) Connection-string style
 
 ```ts
-import { SupabaseEventStore } from '@ricofritzsche/eventstore';
+import { SupabaseEventStore } from '@ricofritzsche/eventstore-supabase';
 
 const store = new SupabaseEventStore({
   connectionString:
@@ -223,3 +223,7 @@ How it works:
 - If `SUPABASE_TEST_SERVICE_ROLE_KEY` is set, it additionally seeds a `tenant_id = NULL` event and verifies
   that tenant-scoped stores do not see shared/no-tenant events.
 - If required env vars are missing, the test is skipped automatically.
+
+## License
+
+MIT © Rico Fritzsche

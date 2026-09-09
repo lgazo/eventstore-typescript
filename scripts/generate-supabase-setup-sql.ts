@@ -1,4 +1,4 @@
-import { createSupabaseSetupSql } from '../src/eventstore/stores/supabase';
+import { createSupabaseSetupSql } from '@ricofritzsche/eventstore-supabase';
 
 interface CliOptions {
   tableName: string;

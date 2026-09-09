@@ -15,9 +15,12 @@ npm install @ricofritzsche/eventstore @ricofritzsche/eventstore-postgres
 
 # Cloudflare D1-backed store
 npm install @ricofritzsche/eventstore @ricofritzsche/eventstore-d1
+
+# Supabase-backed store
+npm install @ricofritzsche/eventstore @ricofritzsche/eventstore-supabase
 ```
 
-> Install the adapter that matches your persistence choice (`eventstore-postgres` or `eventstore-d1`).
+> Install the adapter that matches your persistence choice (`eventstore-postgres`, `eventstore-d1`, or `eventstore-supabase`).
 
 **NPM Package:** https://www.npmjs.com/package/@ricofritzsche/eventstore
 
@@ -26,10 +29,11 @@ npm install @ricofritzsche/eventstore @ricofritzsche/eventstore-d1
 - `@ricofritzsche/eventstore` – Core types, filters, in-memory store, and notifiers
 - `@ricofritzsche/eventstore-postgres` – PostgreSQL-backed implementation that builds on the core APIs
 - `@ricofritzsche/eventstore-d1` – Cloudflare D1 (SQLite) implementation for Workers environments
+- `@ricofritzsche/eventstore-supabase` – Supabase implementation for browser/SPA and tenant-scoped usage
 
 ## Additional Store Docs
 
-- Supabase support: [SupabaseEventStore guide](src/eventstore/stores/supabase/README.md)
+- Supabase support: [SupabaseEventStore guide](packages/supabase/README.md)
 
 ## High-Level Architecture
 
@@ -59,7 +63,7 @@ The system is built around a core EventStore with pluggable notification system.
 - **PostgreSQL adapter** - Provided via the `@ricofritzsche/eventstore-postgres` workspace package
 - **Cloudflare D1 adapter** - Provided via the `@ricofritzsche/eventstore-d1` workspace package
 - **`stores/memory/`** - In-memory implementation of EventStore with subscription support
-- **`stores/supabase/`** - Supabase implementation for browser/SPA and tenant-scoped usage
+- **Supabase adapter** - Provided via the `@ricofritzsche/eventstore-supabase` workspace package
 - **`notifiers/memory/`** - In-memory notification system (default)
 - **`filter/`** - Event filters and queries
 

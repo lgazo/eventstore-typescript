@@ -13,12 +13,12 @@
     "packages/*"
   ],
   "scripts": {
-    "build": "npm run build:core && npm run build:postgres && npm run build:d1",
+    "build": "npm run build:core && npm run build:postgres && npm run build:d1 && npm run build:supabase",
     "build:core": "tsc",
     "build:postgres": "npm run build -w ./packages/postgres",
     "build:d1": "npm run build -w ./packages/d1",
     "build:watch": "tsc --watch",
-    "clean": "rm -rf dist packages/postgres/dist packages/d1/dist",
+    "clean": "rm -rf dist packages/postgres/dist packages/d1/dist packages/supabase/dist",
     "dev": "ts-node src/index.ts",
     "example": "ts-node -r tsconfig-paths/register src/examples/banking/cli.ts",
     "simple": "ts-node -r tsconfig-paths/register simple.ts",
@@ -32,7 +32,8 @@
     "format": "prettier --write src/**/*.ts",
     "format:check": "prettier --check src/**/*.ts",
     "prepublishOnly": "npm run clean && npm run build && npm run test",
-    "prepack": "npm run build"
+    "prepack": "npm run build",
+    "build:supabase": "npm run build -w ./packages/supabase"
   },
   "keywords": [
     "eventstore",
@@ -69,7 +70,6 @@
     "typescript": "^5.0.0"
   },
   "dependencies": {
-    "@supabase/supabase-js": "^2.57.4",
     "dotenv": "^17.0.1",
     "uuid": "^11.1.0"
   },
