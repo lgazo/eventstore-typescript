@@ -31,6 +31,25 @@ npm install @ricofritzsche/eventstore @ricofritzsche/eventstore-supabase
 - `@ricofritzsche/eventstore-d1` – Cloudflare D1 (SQLite) implementation for Workers environments
 - `@ricofritzsche/eventstore-supabase` – Supabase implementation for browser/SPA and tenant-scoped usage
 
+## Running Postgres for Tests
+
+The Postgres integration tests (`tests/eventstore.test.ts`, `tests/optimistic-locking.test.ts`) need a live Postgres on `localhost:5432`. Start one with the checked-in `compose.yaml` (works with Docker Compose or `podman-compose`):
+
+```bash
+docker compose up -d          # or: podman-compose up -d
+cp .env.example .env          # credentials below match the compose service
+npm test
+```
+
+`.env` values used by the test suite (the fallback in `tests/eventstore.test.ts` matches these, so tests run even without a `.env`):
+
+```
+DATABASE_URL=postgres://postgres:postgres@localhost:5432/eventstore
+DATABASE_TEST_URL=postgres://postgres:postgres@localhost:5432/eventstore_test
+```
+
+Tare down with `docker compose down` (`podman-compose down`); event data lives in the `eventstore-pgdata` named volume, so it survives restarts. Without any container runtime, `npm test` still passes — the remaining suites are pure in-memory/unit tests.
+
 ## Additional Store Docs
 
 - Supabase support: [SupabaseEventStore guide](packages/supabase/README.md)

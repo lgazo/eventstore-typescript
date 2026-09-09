@@ -1,0 +1,36 @@
+# Local Postgres for integration tests (tests/eventstore.test.ts, tests/optimistic-locking.test.ts).
+#
+# Works with Docker Compose, Podman (podman-compose), or plain podman:
+#   docker compose up -d        (or: podman-compose up -d)
+#   podman run -d --name eventstore-test-postgres -e POSTGRES_PASSWORD=postgres \
+#     -e POSTGRES_DB=eventstore_test -p 5432:5432 -v eventstore-pgdata:/var/lib/postgresql/data \
+#     docker.io/library/postgres:16
+#
+# Then create a .env from .env.example (the compose credentials below match
+# the test fallback in tests/eventstore.test.ts):
+#   cp .env.example .env
+#   # DATABASE_URL=postgres://postgres:postgres@localhost:5432/eventstore
+#   # DATABASE_TEST_URL=postgres://postgres:postgres@localhost:5432/eventstore_test
+#
+# Tare down (keeps the named volume):
+#   docker compose down         (or: podman-compose down)
+
+services:
+  postgres:
+    image: docker.io/library/postgres:16
+    container_name: eventstore-test-postgres
+    environment:
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: eventstore_test
+    ports:
+      - "5432:5432"
+    volumes:
+      - eventstore-pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d eventstore_test"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  eventstore-pgdata:
