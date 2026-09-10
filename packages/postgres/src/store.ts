@@ -148,7 +148,19 @@ export class PostgresEventStore implements EventStore {
     );
 
     const adminPool = new Pool({ connectionString: adminConnectionString });
-    const client = await adminPool.connect();
+    let client;
+    try {
+      client = await adminPool.connect();
+    } catch (err: any) {
+      // Managed Postgres (e.g. WebHouse) pre-provisions the target database and
+      // forbids connecting to the `postgres` maintenance database. Treat an
+      // unreachable admin database as non-fatal: the target already exists, so
+      // fall through to createTableAndIndexes(). A genuinely missing database
+      // surfaces as a clear error there instead.
+      console.log(`eventstore-stores-postgres-err06: admin database unreachable, assuming ${this.databaseName} already exists: ${err.message}`);
+      await adminPool.end().catch(() => {});
+      return;
+    }
 
     try {
       await client.query(createDatabaseQuery(this.databaseName));
