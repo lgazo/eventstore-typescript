@@ -1,4 +1,5 @@
 import { EventFilter, EventQuery } from '@ricofritzsche/eventstore';
+import { quoteIdentifier } from './schema';
 
 
 export function compileContextQueryConditions(query: EventQuery, paramsBaseIndex: number = 0): { sql: string; params: unknown[] } {
@@ -49,46 +50,61 @@ function compileContextQueryConditionsFilter(filter: EventFilter, paramsBaseInde
 }
 
 
-export function buildContextQuerySql(query: EventQuery): { sql: string; params: unknown[] } {
+export function buildContextQuerySql(query: EventQuery, tableName: string = 'events', tenantId?: string): { sql: string; params: unknown[] } {
   const params: unknown[] = [];
-  let whereClause = '';
+  const clauses: string[] = [];
+
+  if (tenantId !== undefined) {
+    params.push(tenantId);
+    clauses.push(`tenant_id = $${params.length}`);
+  }
 
   if (query.options?.minSequenceNumber !== undefined) {
     params.push(query.options.minSequenceNumber);
-    whereClause = `sequence_number > $${params.length}`;
+    clauses.push(`sequence_number > $${params.length}`);
   }
 
   const conditions = compileContextQueryConditions(query, params.length);
   params.push(...conditions.params);
 
   if (conditions.sql.length > 0) {
-    whereClause = whereClause.length > 0
-      ? `${whereClause} AND ${conditions.sql}`
-      : conditions.sql;
+    clauses.push(conditions.sql);
   }
 
-  let sql = 'SELECT * FROM events';
-  if (whereClause.length > 0) sql += ` WHERE ${whereClause}`;
+  let sql = `SELECT * FROM ${quoteIdentifier(tableName)}`;
+  if (clauses.length > 0) sql += ` WHERE ${clauses.join(' AND ')}`;
   sql += ' ORDER BY sequence_number ASC';
 
   return { sql, params };
 }
 
 
-export function buildAppendSql(query: EventQuery, expectedMaxSeq: number): { sql: string, params: unknown[] } {
-  const conditions = compileContextQueryConditions(query);
-  
-  const contextParamCount = conditions.params.length;
-  const expectedMaxSeqParam = contextParamCount + 1;
-  const eventTypesParam = contextParamCount + 2;
-  const payloadsParam = contextParamCount + 3;
+export function buildAppendSql(query: EventQuery, expectedMaxSeq: number, tableName: string = 'events', tenantId?: string): { sql: string, params: unknown[] } {
+  const tenantParams: unknown[] = tenantId !== undefined ? [tenantId] : [];
+  const conditions = compileContextQueryConditions(query, tenantParams.length);
+
+  const contextParams = [...tenantParams, ...conditions.params];
+  const contextWhere = [
+    ...(tenantId !== undefined ? [`tenant_id = $${tenantParams.length}`] : []),
+    ...(conditions.sql.length > 0 ? [conditions.sql] : []),
+  ].join(' AND ');
+
+  const expectedMaxSeqParam = contextParams.length + 1;
+  const eventTypesParam = contextParams.length + 2;
+  const payloadsParam = contextParams.length + 3;
+
+  const insertColumns = tenantId !== undefined
+    ? 'event_type, payload, tenant_id'
+    : 'event_type, payload';
+  const tenantSelect = tenantId !== undefined ? ', $1' : '';
+  const contextWhereSql = contextWhere.length > 0 ? ' WHERE ' + contextWhere : '';
 
   return {
-    sql: 
-`WITH context AS (SELECT MAX(sequence_number) AS max_seq FROM events${conditions.sql.length > 0 ? " WHERE " + conditions.sql : ""})
-INSERT INTO events (event_type, payload)
-SELECT unnest($${eventTypesParam}::text[]), unnest($${payloadsParam}::jsonb[]) FROM context WHERE COALESCE(max_seq, 0) = $${expectedMaxSeqParam}
+    sql:
+`WITH context AS (SELECT MAX(sequence_number) AS max_seq FROM ${quoteIdentifier(tableName)}${contextWhereSql})
+INSERT INTO ${quoteIdentifier(tableName)} (${insertColumns})
+SELECT unnest($${eventTypesParam}::text[]), unnest($${payloadsParam}::jsonb[])${tenantSelect} FROM context WHERE COALESCE(max_seq, 0) = $${expectedMaxSeqParam}
 RETURNING *`,
-    params: [...conditions.params, expectedMaxSeq]
+    params: [...contextParams, expectedMaxSeq]
   };
 }
