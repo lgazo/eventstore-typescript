@@ -48,7 +48,7 @@ DATABASE_URL=postgres://postgres:postgres@localhost:5432/eventstore
 DATABASE_TEST_URL=postgres://postgres:postgres@localhost:5432/eventstore_test
 ```
 
-Tare down with `docker compose down` (`podman-compose down`); event data lives in the `eventstore-pgdata` named volume, so it survives restarts. Without any container runtime, `npm test` still passes — the remaining suites are pure in-memory/unit tests.
+Tear down with `docker compose down` (`podman-compose down`); event data lives in the `eventstore-pgdata` named volume, so it survives restarts. Without any container runtime, `npm test` still passes — the remaining suites are pure in-memory/unit tests.
 
 ## Additional Store Docs
 

@@ -1,6 +1,6 @@
 {
   "name": "@ricofritzsche/eventstore-postgres",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "PostgreSQL-backed store for @ricofritzsche/eventstore",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

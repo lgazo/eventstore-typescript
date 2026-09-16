@@ -14,10 +14,11 @@ import {
 import { buildContextQuerySql, buildAppendSql } from './sql';
 import { mapRecordsToEvents, extractMaxSequenceNumber, prepareInsertParams } from './transform';
 import {
-  CREATE_EVENTS_TABLE,
-  CREATE_EVENT_TYPE_INDEX,
-  CREATE_OCCURRED_AT_INDEX,
-  CREATE_PAYLOAD_GIN_INDEX,
+  createEventsTableSql,
+  createEventTypeIndexSql,
+  createOccurredAtIndexSql,
+  createPayloadGinIndexSql,
+  createTenantSequenceIndexSql,
   createDatabaseQuery,
   changeDatabaseInConnectionString,
   getDatabaseNameFromConnectionString
@@ -29,7 +30,35 @@ const NON_EXISTENT_EVENT_TYPE = '__NON_EXISTENT__' + Math.random().toString(36);
 
 export interface PostgresEventStoreOptions {
   connectionString?: string;
+  tableName?: string;
+  tenantId?: string;
   notifier?: EventStreamNotifier;
+}
+
+export interface ParsedPostgresConnectionString {
+  connectionString: string;
+  tableName?: string;
+  tenantId?: string;
+}
+
+export function parsePostgresConnectionString(connectionString: string): ParsedPostgresConnectionString {
+  let url: URL;
+  try {
+    url = new URL(connectionString);
+  } catch (err) {
+    throw new Error('eventstore-stores-postgres-err13: Invalid connection string. URL parsing failed: ' + (err instanceof Error ? err.message : String(err)));
+  }
+  const tableName = url.searchParams.get('table') ?? undefined;
+  const tenantId = url.searchParams.get('tenantId') ?? undefined;
+
+  url.searchParams.delete('table');
+  url.searchParams.delete('tenantId');
+
+  return {
+    connectionString: url.toString(),
+    ...(tableName ? { tableName } : {}),
+    ...(tenantId ? { tenantId } : {}),
+  };
 }
 
 
@@ -43,17 +72,33 @@ export class PostgresEventStore implements EventStore {
   private readonly connectionString: string;
   private readonly databaseName: string;
   private readonly notifier: EventStreamNotifier;
+  readonly tableName: string;
+  readonly tenantId: string | undefined;
 
   constructor(options: PostgresEventStoreOptions = {}) {
-    const connectionString = options.connectionString || process.env.DATABASE_URL;
-    if (!connectionString) throw new Error('eventstore-stores-postgres-err02: Connection string missing. DATABASE_URL environment variable not set.');
-    this.connectionString = connectionString;
+    const resolvedConnectionString = options.connectionString || process.env.DATABASE_URL;
+    if (!resolvedConnectionString) throw new Error('eventstore-stores-postgres-err02: Connection string missing. DATABASE_URL environment variable not set.');
 
-    const databaseNameFromConnectionString = getDatabaseNameFromConnectionString(connectionString);
-    if (!databaseNameFromConnectionString) throw new Error('eventstore-stores-postgres-err03: Database name not found. Invalid connection string: ' + connectionString);
+    const parsed = options.connectionString
+      ? parsePostgresConnectionString(options.connectionString)
+      : undefined;
+
+    const databaseNameFromConnectionString = getDatabaseNameFromConnectionString(resolvedConnectionString);
+    if (!databaseNameFromConnectionString) throw new Error('eventstore-stores-postgres-err03: Database name not found. Invalid connection string: ' + resolvedConnectionString);
     this.databaseName = databaseNameFromConnectionString;
 
-    this.pool = new Pool({ connectionString });
+    this.connectionString = parsed?.connectionString ?? resolvedConnectionString;
+
+    this.tableName = options.tableName ?? parsed?.tableName ?? 'events';
+    if (this.tableName.length === 0 || this.tableName.includes('\u0000')) {
+      throw new Error('eventstore-stores-postgres-err11: Invalid table name. Table name must not be empty or contain null bytes.');
+    }
+    this.tenantId = options.tenantId ?? parsed?.tenantId;
+    if (this.tenantId !== undefined && this.tenantId.length === 0) {
+      throw new Error('eventstore-stores-postgres-err12: Invalid tenant id. Tenant id must not be empty.');
+    }
+
+    this.pool = new Pool({ connectionString: this.connectionString });
     // This is the "Default" EventStreamNotifier, but allow override
     this.notifier = options.notifier ?? new MemoryEventStreamNotifier();
   }
@@ -68,7 +113,7 @@ export class PostgresEventStore implements EventStore {
         ? filterCriteria as EventQuery 
         : createQuery(filterCriteria as EventFilter);
       
-      const sqlQuery = buildContextQuerySql(eventQuery);
+      const sqlQuery = buildContextQuerySql(eventQuery, this.tableName, this.tenantId);
       const result = await client.query(sqlQuery.sql, sqlQuery.params);
 
       return {
@@ -113,7 +158,7 @@ export class PostgresEventStore implements EventStore {
 
     const client = await this.pool.connect();
     try {
-      const cteQuery = buildAppendSql(eventQuery, expectedMaxSequenceNumber);
+      const cteQuery = buildAppendSql(eventQuery, expectedMaxSequenceNumber, this.tableName, this.tenantId);
       const params = prepareInsertParams(events, cteQuery.params);
 
       const result = await client.query(cteQuery.sql, params);
@@ -168,10 +213,11 @@ export class PostgresEventStore implements EventStore {
   private async createTableAndIndexes(): Promise<void> {
     const client = await this.pool.connect();
     try {
-      await client.query(CREATE_EVENTS_TABLE);
-      await client.query(CREATE_EVENT_TYPE_INDEX);
-      await client.query(CREATE_OCCURRED_AT_INDEX);
-      await client.query(CREATE_PAYLOAD_GIN_INDEX);
+      await client.query(createEventsTableSql(this.tableName));
+      await client.query(createEventTypeIndexSql(this.tableName));
+      await client.query(createOccurredAtIndexSql(this.tableName));
+      await client.query(createPayloadGinIndexSql(this.tableName));
+      await client.query(createTenantSequenceIndexSql(this.tableName));
     } finally {
       client.release();
     }
