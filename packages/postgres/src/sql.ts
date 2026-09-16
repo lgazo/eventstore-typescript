@@ -57,6 +57,8 @@ export function buildContextQuerySql(query: EventQuery, tableName: string = 'eve
   if (tenantId !== undefined) {
     params.push(tenantId);
     clauses.push(`tenant_id = $${params.length}`);
+  } else {
+    clauses.push('tenant_id IS NULL');
   }
 
   if (query.options?.minSequenceNumber !== undefined) {
@@ -85,7 +87,7 @@ export function buildAppendSql(query: EventQuery, expectedMaxSeq: number, tableN
 
   const contextParams = [...tenantParams, ...conditions.params];
   const contextWhere = [
-    ...(tenantId !== undefined ? [`tenant_id = $${tenantParams.length}`] : []),
+    ...(tenantId !== undefined ? [`tenant_id = $${tenantParams.length}`] : ['tenant_id IS NULL']),
     ...(conditions.sql.length > 0 ? [conditions.sql] : []),
   ].join(' AND ');
 
