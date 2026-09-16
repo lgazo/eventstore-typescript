@@ -38,7 +38,7 @@ Connection string gains query params `?table=<name>&tenantId=<id>`, parsed and s
 - `buildContextQuerySql(query, tableName, tenantId)`: tenant scope clause is AND-ed ahead of the filter conditions — `tenant_id IS NULL` or `tenant_id = $n`; parameter ordering starts with the tenant param when present, then `minSequenceNumber`, then filter params.
 - `buildAppendSql(query, expectedMaxSeq, tableName, tenantId)`:
   - Context CTE reads from the named table with the tenant scope AND-ed into its WHERE, so `MAX(sequence_number)` is the tenant-scoped max — the optimistic-concurrency check compares against the max observed inside the same scope the command queried.
-  - INSERT gains the `tenant_id` column, bound to the store's tenant param (NULL for shared-stream stores).
+  - INSERT gains the `tenant_id` column, bound via a `$1` reference into the tenant param that already leads the append SQL's parameter list (NULL for shared-stream stores — the tenant column is omitted and Postgres fills the column's NULL default).
 - Sequence numbers stay a global `BIGSERIAL`; per-tenant maxima therefore have gaps. Same behavior as supabase; no per-tenant sequence generator.
 
 ### Query/append semantics (supabase parity)
@@ -49,15 +49,14 @@ Connection string gains query params `?table=<name>&tenantId=<id>`, parsed and s
 
 ### Error handling
 
-- `eventstore-stores-postgres-err11`: invalid table name (empty, null byte, or contains a double quote — `quoteIdentifier` validation, message extended to say table name).
+- `eventstore-stores-postgres-err11`: invalid table name (empty or null byte — embedded double quotes are safely escaped by `quoteIdentifier`).
 - `eventstore-stores-postgres-err12`: invalid tenant id (empty string).
 - Next free codes after `err10` in the current package.
 
 ### Files touched
 
 - `packages/postgres/src/schema.ts` — parameterized DDL, index names, export `quoteIdentifier`.
-- `packages/postgres/src/sql.ts` — table name and tenant scope in both builders.
-- `packages/postgres/src/transform.ts` — `prepareInsertParams` appends the tenant param.
+- `packages/postgres/src/sql.ts` — table name and tenant scope in both builders; the append INSERT binds the tenant via a `$1` reference in the SQL text rather than an extra param, so `transform.ts` needed no change.
 - `packages/postgres/src/store.ts` — options, conn-string parsing, plumb values through.
 - `packages/postgres/README.md` — usage sections for shared vs tenant-scoped streams.
 

@@ -49,6 +49,8 @@ const store = new PostgresEventStore({
 
 Explicit options override connection-string params.
 
+> Note: the `?table=`/`?tenantId=` shorthand is parsed only from an explicit `connectionString` option, not from the `DATABASE_URL` environment variable.
+
 ## Streams: shared vs tenant-scoped
 
 **Shared stream (no `tenantId`):** reads and writes only rows with `tenant_id IS NULL`. Use for single-tenant apps.
@@ -81,7 +83,7 @@ await store.initializeDatabase(); // creates "events_spa" plus per-table indexes
 
 ## Existing deployments
 
-To upgrade an existing `events` table to tenant support without recreating it:
+Tenant-less stores always emit `tenant_id IS NULL` in SQL, so the events table **must** have a `tenant_id` column. **Before using the upgraded package version against an existing table, run this migration — required, not optional** (queries fail with `column "tenant_id" does not exist` until it runs):
 
 ```sql
 ALTER TABLE events ADD COLUMN tenant_id TEXT NULL;

@@ -26,6 +26,16 @@ describe('PostgresEventStore construction', () => {
       expect(parsed.tableName).toBeUndefined();
       expect(parsed.tenantId).toBeUndefined();
     });
+
+    it('should reject keyword/value connection strings with err13', () => {
+      expect(() => parsePostgresConnectionString('host=localhost dbname=myapp'))
+        .toThrow('eventstore-stores-postgres-err13');
+    });
+
+    it('should reject keyword/value connection strings at construction with err13', () => {
+      expect(() => new PostgresEventStore({ connectionString: 'host=localhost dbname=myapp' }))
+        .toThrow('eventstore-stores-postgres-err13');
+    });
   });
 
   describe('options resolution', () => {

@@ -42,7 +42,12 @@ export interface ParsedPostgresConnectionString {
 }
 
 export function parsePostgresConnectionString(connectionString: string): ParsedPostgresConnectionString {
-  const url = new URL(connectionString);
+  let url: URL;
+  try {
+    url = new URL(connectionString);
+  } catch (err) {
+    throw new Error('eventstore-stores-postgres-err13: Invalid connection string. URL parsing failed: ' + (err instanceof Error ? err.message : String(err)));
+  }
   const tableName = url.searchParams.get('table') ?? undefined;
   const tenantId = url.searchParams.get('tenantId') ?? undefined;
 
@@ -74,13 +79,13 @@ export class PostgresEventStore implements EventStore {
     const resolvedConnectionString = options.connectionString || process.env.DATABASE_URL;
     if (!resolvedConnectionString) throw new Error('eventstore-stores-postgres-err02: Connection string missing. DATABASE_URL environment variable not set.');
 
-    const databaseNameFromConnectionString = getDatabaseNameFromConnectionString(resolvedConnectionString);
-    if (!databaseNameFromConnectionString) throw new Error('eventstore-stores-postgres-err03: Database name not found. Invalid connection string: ' + resolvedConnectionString);
-    this.databaseName = databaseNameFromConnectionString;
-
     const parsed = options.connectionString
       ? parsePostgresConnectionString(options.connectionString)
       : undefined;
+
+    const databaseNameFromConnectionString = getDatabaseNameFromConnectionString(resolvedConnectionString);
+    if (!databaseNameFromConnectionString) throw new Error('eventstore-stores-postgres-err03: Database name not found. Invalid connection string: ' + resolvedConnectionString);
+    this.databaseName = databaseNameFromConnectionString;
 
     this.connectionString = parsed?.connectionString ?? resolvedConnectionString;
 
