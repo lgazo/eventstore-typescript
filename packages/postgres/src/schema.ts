@@ -1,25 +1,45 @@
-export const CREATE_EVENTS_TABLE = `
-  CREATE TABLE IF NOT EXISTS events (
+export function createEventsTableSql(tableName: string): string {
+  return `
+  CREATE TABLE IF NOT EXISTS ${quoteIdentifier(tableName)} (
     sequence_number BIGSERIAL PRIMARY KEY,
+    tenant_id TEXT NULL,
     occurred_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     event_type TEXT NOT NULL,
     payload JSONB NOT NULL
   )
-`;
+`.trim();
+}
 
-export const CREATE_EVENT_TYPE_INDEX = `
-  CREATE INDEX IF NOT EXISTS idx_events_type ON events(event_type)
-`;
+export function createEventTypeIndexSql(tableName: string): string {
+  return `
+  CREATE INDEX IF NOT EXISTS ${quoteIdentifier(`idx_${tableName}_type`)} ON ${quoteIdentifier(tableName)}(event_type)
+`.trim();
+}
 
-export const CREATE_OCCURRED_AT_INDEX = `
-  CREATE INDEX IF NOT EXISTS idx_events_occurred_at ON events(occurred_at)
-`;
+export function createOccurredAtIndexSql(tableName: string): string {
+  return `
+  CREATE INDEX IF NOT EXISTS ${quoteIdentifier(`idx_${tableName}_occurred_at`)} ON ${quoteIdentifier(tableName)}(occurred_at)
+`.trim();
+}
 
-export const CREATE_PAYLOAD_GIN_INDEX = `
-  CREATE INDEX IF NOT EXISTS idx_events_payload_gin ON events USING gin(payload)
-`;
+export function createPayloadGinIndexSql(tableName: string): string {
+  return `
+  CREATE INDEX IF NOT EXISTS ${quoteIdentifier(`idx_${tableName}_payload_gin`)} ON ${quoteIdentifier(tableName)} USING gin(payload)
+`.trim();
+}
 
-function quoteIdentifier(identifier: string): string {
+export function createTenantSequenceIndexSql(tableName: string): string {
+  return `
+  CREATE INDEX IF NOT EXISTS ${quoteIdentifier(`idx_${tableName}_tenant_seq`)} ON ${quoteIdentifier(tableName)}(tenant_id, sequence_number)
+`.trim();
+}
+
+export const CREATE_EVENTS_TABLE = createEventsTableSql('events');
+export const CREATE_EVENT_TYPE_INDEX = createEventTypeIndexSql('events');
+export const CREATE_OCCURRED_AT_INDEX = createOccurredAtIndexSql('events');
+export const CREATE_PAYLOAD_GIN_INDEX = createPayloadGinIndexSql('events');
+
+export function quoteIdentifier(identifier: string): string {
   if (identifier.length === 0) {
     throw new Error('eventstore-stores-postgres-err07: Database name must not be empty');
   }
