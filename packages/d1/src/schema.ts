@@ -14,3 +14,6 @@ export const CREATE_EVENT_TYPE_INDEX = `
 export const CREATE_OCCURRED_AT_INDEX = `
   CREATE INDEX IF NOT EXISTS idx_events_occurred_at ON events(occurred_at)
 `;
+
+export const createPayloadKeyIndex = (key: string) =>
+  `CREATE INDEX IF NOT EXISTS idx_events_${key} ON events(json_extract(payload, '$.${key}'))`;

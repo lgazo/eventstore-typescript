@@ -14,17 +14,12 @@ import {
 } from '@ricofritzsche/eventstore';
 
 import { D1Database } from './types';
-import { buildContextQuerySql } from './sql';
+import { buildContextQuerySql, buildContextWhere } from './sql';
 import { filterEventsByQuery } from './query-filter';
 import { mapRowsToEvents, extractMaxSequenceNumber, EventRow } from './transform';
 import { CREATE_EVENTS_TABLE, CREATE_EVENT_TYPE_INDEX, CREATE_OCCURRED_AT_INDEX } from './schema';
 
 const NON_EXISTENT_EVENT_TYPE = '__NON_EXISTENT__' + Math.random().toString(36);
-const INSERT_EVENT_SQL = `
-  INSERT INTO events (event_type, payload)
-  VALUES ('?1', json('?2'))
-  RETURNING sequence_number, occurred_at, event_type, payload
-`;
 
 export interface D1EventStoreOptions {
   database: D1Database;
@@ -77,38 +72,21 @@ export class D1EventStore implements EventStore {
 
     const { query, expectedSequenceNumber } = this.normalizeAppendContext(filterCriteria, expectedMaxSequenceNumber);
 
-    let transactionStarted = false;
-    const insertedEvents: EventRecord[] = [];
-
-    try {
-      await this.beginTransaction();
-      transactionStarted = true;
-
-      const contextEvents = await this.runQuery(query);
-      const currentMaxSeq = extractMaxSequenceNumber(contextEvents);
-
-      if (currentMaxSeq !== expectedSequenceNumber) {
-        throw new Error('eventstore-stores-d1-err03: Context changed: events were modified between query() and append()');
-      }
-
-      for (const event of events) {
-        const rows = await this.executeAll<EventRow>(INSERT_EVENT_SQL, [
-          event.eventType,
-          JSON.stringify(event.payload),
-        ]);
-        insertedEvents.push(...mapRowsToEvents(rows));
-      }
-
-      await this.commitTransaction();
-      transactionStarted = false;
-
-      await this.notifier.notify(insertedEvents);
-    } catch (err) {
-      if (transactionStarted) {
-        await this.rollbackTransaction();
-      }
-      throw err;
+    const { where, params } = buildContextWhere(query);
+    const values = events.map(() => '(?, ?)').join(', ');
+    const sql = `INSERT INTO events (event_type, payload)
+      SELECT v.column1, json(v.column2) FROM (VALUES ${values}) AS v
+      WHERE (SELECT COALESCE(MAX(sequence_number), 0) FROM events WHERE ${where}) = ?
+      RETURNING sequence_number, occurred_at, event_type, payload`;
+    const rows = await this.executeAll<EventRow>(sql, [
+      ...events.flatMap((e) => [e.eventType, JSON.stringify(e.payload)]),
+      ...params,
+      expectedSequenceNumber,
+    ]);
+    if (rows.length === 0) {
+      throw new Error('eventstore-stores-d1-err03: Context changed: events were modified between query() and append()');
     }
+    await this.notifier.notify(mapRowsToEvents(rows));
   }
 
   // AFAIK this won't work with CF
@@ -164,11 +142,7 @@ export class D1EventStore implements EventStore {
   }
 
   private async executeAll<T>(sql: string, params: unknown[] = []): Promise<T[]> {
-    console.log(`[d1 store] executeAll (${params.length}) ${sql}<<`, params);
-    const statement = this.db.prepare(sql);
-    if (params.length > 0) {
-      statement.bind(...params);
-    }
+    const statement = params.length > 0 ? this.db.prepare(sql).bind(...params) : this.db.prepare(sql);
 
     const result = await statement.run<T>();
     if (!result.success) {
@@ -178,20 +152,7 @@ export class D1EventStore implements EventStore {
     return result.results ?? [];
   }
 
-  private async beginTransaction(): Promise<void> {
-    // await this.exec('BEGIN IMMEDIATE TRANSACTION');
-  }
-
-  private async commitTransaction(): Promise<void> {
-    // await this.exec('COMMIT');
-  }
-
-  private async rollbackTransaction(): Promise<void> {
-    // await this.exec('ROLLBACK');
-  }
-
   private async exec(sql: string): Promise<void> {
-    console.log(`[d1 store] exec ${sql}`, this.db);
     const result = await this.db.prepare(sql).run();
     if (!result.success) {
       throw new Error(`eventstore-stores-d1-err05: Statement failed: ${result.error ?? 'Unknown error'}`);
