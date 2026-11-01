@@ -89,7 +89,7 @@ The system is built around a core EventStore with pluggable notification system.
 **Responsibilities**:
 - Store events immutably in storage medium, e.g. PostgreSQL database or in-memory
 - Query events with complex filtering using EventQuery
-- Provide atomic consistency through optimistic locking (CTE-based for Postgres, transactional for D1)
+- Provide atomic consistency through optimistic locking (CTE-based for Postgres, single-statement conditional append for D1)
 - Notify subscribers immediately when events are appended
 - Manage subscription lifecycle
 
@@ -269,7 +269,7 @@ const incrementalResult = await eventStore.query(incrementalQuery);
 
 ### 3. Atomic Consistency with Optimistic Locking
 
-The EventStore provides atomic consistency through optimistic locking using database-specific techniques (CTEs for Postgres, wrapped transactions for D1). 
+The EventStore provides atomic consistency through optimistic locking using database-specific techniques (CTEs for Postgres, a single conditional statement for D1). 
 This approach ensures that concurrent operations only conflict when they actually depend on the same event context, rather than using traditional aggregate-level locking.
 
 ```typescript
@@ -326,7 +326,7 @@ FROM context, unnest($1) AS new_events
 WHERE COALESCE(max_seq, 0) = $2
 ```
 
-Cloudflare D1 performs the same optimistic check inside a single transaction: it selects the current max sequence for the query context and rolls back if the expectation does not match before inserting the new events.
+Cloudflare D1 has no interactive transactions, so the store performs the same optimistic check in a single atomic statement: the INSERT only runs when `MAX(sequence_number)` over the query context (tenant-scoped) still equals the expectation; otherwise it inserts nothing and the call fails with `eventstore-stores-d1-err03`.
 
 ### 4. Event Subscription
 ```typescript
@@ -405,7 +405,9 @@ class PostgresEventStore {
 
 ### D1EventStore (`@ricofritzsche/eventstore-d1`)
 
-The Cloudflare D1-backed store targets Workers environments that expose a D1 binding. It mirrors the Postgres API but uses SQLite transactions behind the scenes.
+The Cloudflare D1-backed store targets Workers environments that expose a D1 binding. It mirrors the Postgres API with one store instance per scope: pass `tenantId` to pin the store to a tenant (`tenant_id IS NULL` rows = shared stream when omitted). `EventQuery.options.minSequenceNumber` is honored. Limitations: payload predicates accept scalars only (nested/array predicates fail with `eventstore-stores-d1-err06`; the JS post-filter still applies subset semantics on top of the SQL `json_extract` pre-filter), D1 caps bound parameters at 100 (2 per event + context params bound the append), D1 has no interactive transactions (the optimistic check is a single atomic statement), and D1's `CURRENT_TIMESTAMP` default carries second resolution — appends set `occurred_at` explicitly to a millisecond-precision UTC ISO string.
+
+Deploy the D1 schema with Wrangler migrations: `packages/d1/migrations/0001_initialize.sql` (or call `initializeDatabase()` once from a script; it also adds `tenant_id` to tables created before tenancy).
 
 ```typescript
 class D1EventStore {
