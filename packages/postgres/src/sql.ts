@@ -1,4 +1,4 @@
-import { EventFilter, EventQuery } from '@ricofritzsche/eventstore';
+import { EventFilter, EventQuery } from '@lgazo/eventstore';
 import { quoteIdentifier } from './schema';
 
 

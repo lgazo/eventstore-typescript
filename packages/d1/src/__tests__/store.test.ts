@@ -1,4 +1,4 @@
-import { createFilter, createQuery } from '@ricofritzsche/eventstore';
+import { createFilter, createQuery } from '@lgazo/eventstore';
 import { D1EventStore } from '../store';
 import { nodeSqliteD1 } from '../test-support/node-sqlite-d1';
 

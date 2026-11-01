@@ -5,7 +5,7 @@ import {
   extractMaxSequenceNumber, 
   prepareInsertParams 
 } from '../transform';
-import { Event } from '@ricofritzsche/eventstore';
+import { Event } from '@lgazo/eventstore';
 
 
 describe('Transform Functions', () => {

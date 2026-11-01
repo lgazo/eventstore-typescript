@@ -266,7 +266,7 @@ Expected: FAIL — new describes fail; quoted-table expectations fail until impl
 In `packages/postgres/src/sql.ts`:
 
 ```ts
-import { EventFilter, EventQuery } from '@ricofritzsche/eventstore';
+import { EventFilter, EventQuery } from '@lgazo/eventstore';
 import { quoteIdentifier } from './schema';
 ```
 

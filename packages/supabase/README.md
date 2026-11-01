@@ -1,4 +1,4 @@
-# @ricofritzsche/eventstore-supabase
+# @lgazo/eventstore-supabase
 
 This store persists events in a Supabase Postgres table and is designed to work in browser-based SPA applications.
 
@@ -28,7 +28,7 @@ Use this when one store instance should only operate on one tenant/user stream.
 Use `createSupabaseSetupSql` to generate the SQL migration for your table:
 
 ```ts
-import { createSupabaseSetupSql } from '@ricofritzsche/eventstore';
+import { createSupabaseSetupSql } from '@lgazo/eventstore';
 
 const sql = createSupabaseSetupSql({
   tableName: 'events_spa',
@@ -89,7 +89,7 @@ The script creates:
 ### A) Shared stream (no `tenantId`)
 
 ```ts
-import { SupabaseEventStore } from '@ricofritzsche/eventstore-supabase';
+import { SupabaseEventStore } from '@lgazo/eventstore-supabase';
 
 const store = new SupabaseEventStore({
   supabaseUrl: 'https://YOUR_PROJECT_ID.supabase.co',
@@ -101,7 +101,7 @@ const store = new SupabaseEventStore({
 ### B) Tenant-scoped stream (`tenantId`)
 
 ```ts
-import { SupabaseEventStore } from '@ricofritzsche/eventstore-supabase';
+import { SupabaseEventStore } from '@lgazo/eventstore-supabase';
 
 const store = new SupabaseEventStore({
   supabaseUrl: 'https://YOUR_PROJECT_ID.supabase.co',
@@ -115,7 +115,7 @@ Example with Supabase login (email/password) before creating the store:
 
 ```ts
 import { createClient } from '@supabase/supabase-js';
-import { SupabaseEventStore } from '@ricofritzsche/eventstore-supabase';
+import { SupabaseEventStore } from '@lgazo/eventstore-supabase';
 
 const supabaseUrl = 'https://YOUR_PROJECT_ID.supabase.co';
 const supabaseAnonKey = 'YOUR_ANON_KEY';
@@ -144,7 +144,7 @@ const store = new SupabaseEventStore({
 ### C) Connection-string style
 
 ```ts
-import { SupabaseEventStore } from '@ricofritzsche/eventstore-supabase';
+import { SupabaseEventStore } from '@lgazo/eventstore-supabase';
 
 const store = new SupabaseEventStore({
   connectionString:

@@ -10,7 +10,7 @@ import {
   MemoryEventStreamNotifier,
   createFilter,
   createQuery,
-} from '@ricofritzsche/eventstore';
+} from '@lgazo/eventstore';
 import { buildContextQuerySql, buildAppendSql } from './sql';
 import { mapRecordsToEvents, extractMaxSequenceNumber, prepareInsertParams } from './transform';
 import {

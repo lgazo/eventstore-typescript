@@ -1,4 +1,4 @@
-import { EventRecord } from '@ricofritzsche/eventstore';
+import { EventRecord } from '@lgazo/eventstore';
 
 export interface EventRow {
   sequence_number: number;

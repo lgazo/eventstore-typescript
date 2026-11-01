@@ -1,8 +1,8 @@
 import dotenv from 'dotenv';
 import { createClient } from '@supabase/supabase-js';
 import { v4 as uuidv4 } from 'uuid';
-import { SupabaseEventStore } from '@ricofritzsche/eventstore-supabase';
-import { createFilter, createQuery } from '@ricofritzsche/eventstore';
+import { SupabaseEventStore } from '@lgazo/eventstore-supabase';
+import { createFilter, createQuery } from '@lgazo/eventstore';
 
 dotenv.config();
 

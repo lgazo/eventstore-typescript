@@ -1,4 +1,4 @@
-// Main Node.js entry point for @ricofritzsche/eventstore
+// Main Node.js entry point for @lgazo/eventstore
 export { MemoryEventStore } from './eventstore/stores/memory';
 export { EventStream } from './eventstore/stores/memory/eventstream';
 export { processQuery } from './eventstore/stores/memory/queryprocessor';

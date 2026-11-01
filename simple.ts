@@ -2,7 +2,7 @@
 
 import dotenv from 'dotenv';
 import { createFilter } from './src/eventstore';
-import { PostgresEventStore } from '@ricofritzsche/eventstore-postgres';
+import { PostgresEventStore } from '@lgazo/eventstore-postgres';
 
 // Load environment variables
 dotenv.config();

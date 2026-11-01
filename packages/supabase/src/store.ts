@@ -8,10 +8,10 @@ import {
   EventSubscription,
   HandleEvents,
   QueryResult,
-} from '@ricofritzsche/eventstore';
-import { createFilter, createQuery } from '@ricofritzsche/eventstore';
-import { MemoryEventStreamNotifier } from '@ricofritzsche/eventstore';
-import { processQuery } from '@ricofritzsche/eventstore';
+} from '@lgazo/eventstore';
+import { createFilter, createQuery } from '@lgazo/eventstore';
+import { MemoryEventStreamNotifier } from '@lgazo/eventstore';
+import { processQuery } from '@lgazo/eventstore';
 import { deserializeEvent } from './transform';
 
 const NON_EXISTENT_EVENT_TYPE = '__NON_EXISTENT__' + Math.random().toString(36);

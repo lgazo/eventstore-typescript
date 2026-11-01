@@ -1,5 +1,5 @@
-import { createFilter, createQuery } from '@ricofritzsche/eventstore';
-import type { D1Database } from '@ricofritzsche/eventstore-d1';
+import { createFilter, createQuery } from '@lgazo/eventstore';
+import type { D1Database } from '@lgazo/eventstore-d1';
 import { Miniflare } from 'miniflare';
 import { D1EventStore } from '../packages/d1/src/store';
 

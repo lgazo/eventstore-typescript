@@ -1,6 +1,6 @@
 # EventStore
 
-[![npm version](https://img.shields.io/npm/v/@ricofritzsche/eventstore.svg)](https://www.npmjs.com/package/@ricofritzsche/eventstore)
+[![npm version](https://img.shields.io/npm/v/@lgazo/eventstore.svg)](https://www.npmjs.com/package/@lgazo/eventstore)
 
 A comprehensive TypeScript implementation of event sourcing with real-time event subscriptions and projections. 
 This system provides persistent event storage with automatic notification to subscribers for building responsive, event-sourced applications.
@@ -11,25 +11,25 @@ This package is a collaboration between [Ralf Westphal](https://github.com/ralfw
 
 ```bash
 # PostgreSQL-backed store
-npm install @ricofritzsche/eventstore @ricofritzsche/eventstore-postgres
+npm install @lgazo/eventstore @lgazo/eventstore-postgres
 
 # Cloudflare D1-backed store
-npm install @ricofritzsche/eventstore @ricofritzsche/eventstore-d1
+npm install @lgazo/eventstore @lgazo/eventstore-d1
 
 # Supabase-backed store
-npm install @ricofritzsche/eventstore @ricofritzsche/eventstore-supabase
+npm install @lgazo/eventstore @lgazo/eventstore-supabase
 ```
 
 > Install the adapter that matches your persistence choice (`eventstore-postgres`, `eventstore-d1`, or `eventstore-supabase`).
 
-**NPM Package:** https://www.npmjs.com/package/@ricofritzsche/eventstore
+**NPM Package:** https://www.npmjs.com/package/@lgazo/eventstore
 
 ## Workspace Packages
 
-- `@ricofritzsche/eventstore` – Core types, filters, in-memory store, and notifiers
-- `@ricofritzsche/eventstore-postgres` – PostgreSQL-backed implementation that builds on the core APIs
-- `@ricofritzsche/eventstore-d1` – Cloudflare D1 (SQLite) implementation for Workers environments
-- `@ricofritzsche/eventstore-supabase` – Supabase implementation for browser/SPA and tenant-scoped usage
+- `@lgazo/eventstore` – Core types, filters, in-memory store, and notifiers
+- `@lgazo/eventstore-postgres` – PostgreSQL-backed implementation that builds on the core APIs
+- `@lgazo/eventstore-d1` – Cloudflare D1 (SQLite) implementation for Workers environments
+- `@lgazo/eventstore-supabase` – Supabase implementation for browser/SPA and tenant-scoped usage
 
 ## Running Postgres for Tests
 
@@ -79,10 +79,10 @@ The system is built around a core EventStore with pluggable notification system.
 
 **Key Components**:
 - **`types.ts`** - Core interfaces (Event, EventStore, EventQuery, EventStreamNotifier)
-- **PostgreSQL adapter** - Provided via the `@ricofritzsche/eventstore-postgres` workspace package
-- **Cloudflare D1 adapter** - Provided via the `@ricofritzsche/eventstore-d1` workspace package
+- **PostgreSQL adapter** - Provided via the `@lgazo/eventstore-postgres` workspace package
+- **Cloudflare D1 adapter** - Provided via the `@lgazo/eventstore-d1` workspace package
 - **`stores/memory/`** - In-memory implementation of EventStore with subscription support
-- **Supabase adapter** - Provided via the `@ricofritzsche/eventstore-supabase` workspace package
+- **Supabase adapter** - Provided via the `@lgazo/eventstore-supabase` workspace package
 - **`notifiers/memory/`** - In-memory notification system (default)
 - **`filter/`** - Event filters and queries
 
@@ -198,7 +198,7 @@ The subscription system enables real-time, concurrent processing:
 ### 1. Setup
 ```bash
 # Install the package
-npm install @ricofritzsche/eventstore @ricofritzsche/eventstore-postgres
+npm install @lgazo/eventstore @lgazo/eventstore-postgres
 
 # Start Postgres
 docker run --name eventstore-postgres -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=bank -p 5432:5432 -d postgres:15
@@ -213,9 +213,9 @@ export DATABASE_URL="postgres://postgres:postgres@localhost:5432/bank"
 
 ### 2. EventQuery
 ```typescript
-import { MemoryEventStore, createQuery, createFilter } from '@ricofritzsche/eventstore';
-import { PostgresEventStore } from '@ricofritzsche/eventstore-postgres';
-import { D1EventStore } from '@ricofritzsche/eventstore-d1';
+import { MemoryEventStore, createQuery, createFilter } from '@lgazo/eventstore';
+import { PostgresEventStore } from '@lgazo/eventstore-postgres';
+import { D1EventStore } from '@lgazo/eventstore-d1';
 
 // Postgres
 const eventStore = new PostgresEventStore({ connectionString: "..." }); 
@@ -330,8 +330,8 @@ Cloudflare D1 has no interactive transactions, so the store performs the same op
 
 ### 4. Event Subscription
 ```typescript
-import { createQuery, createFilter } from '@ricofritzsche/eventstore';
-import { PostgresEventStore } from '@ricofritzsche/eventstore-postgres';
+import { createQuery, createFilter } from '@lgazo/eventstore';
+import { PostgresEventStore } from '@lgazo/eventstore-postgres';
 
 // Create EventStore with default MemoryEventStreamNotifier
 const eventStore = new PostgresEventStore({connectionstring: "..."});
@@ -360,8 +360,8 @@ const subscription = await eventStore.subscribe(async (events) => {
 Replace the notification system with your own:
 
 ```typescript
-import { EventStreamNotifier } from '@ricofritzsche/eventstore';
-import { PostgresEventStore } from '@ricofritzsche/eventstore-postgres';
+import { EventStreamNotifier } from '@lgazo/eventstore';
+import { PostgresEventStore } from '@lgazo/eventstore-postgres';
 
 class DatabaseEventStreamNotifier implements EventStreamNotifier {
   // Custom implementation using database triggers, message queues, etc.
@@ -375,9 +375,9 @@ const eventStore = new PostgresEventStore({
 
 ## API Reference
 
-### PostgresEventStore (`@ricofritzsche/eventstore-postgres`)
+### PostgresEventStore (`@lgazo/eventstore-postgres`)
 
-The PostgreSQL-backed store is distributed via the `@ricofritzsche/eventstore-postgres` workspace package and depends on `@ricofritzsche/eventstore` for core types.
+The PostgreSQL-backed store is distributed via the `@lgazo/eventstore-postgres` workspace package and depends on `@lgazo/eventstore` for core types.
 
 ```typescript
 class PostgresEventStore {
@@ -403,7 +403,7 @@ class PostgresEventStore {
 }
 ```
 
-### D1EventStore (`@ricofritzsche/eventstore-d1`)
+### D1EventStore (`@lgazo/eventstore-d1`)
 
 The Cloudflare D1-backed store targets Workers environments that expose a D1 binding. It mirrors the Postgres API with one store instance per scope: pass `tenantId` to pin the store to a tenant (`tenant_id IS NULL` rows = shared stream when omitted). `EventQuery.options.minSequenceNumber` is honored. Limitations: payload predicates accept scalars only (nested/array predicates fail with `eventstore-stores-d1-err06`; the JS post-filter still applies subset semantics on top of the SQL `json_extract` pre-filter), D1 caps bound parameters at 100 (2 per event + context params bound the append), D1 has no interactive transactions (the optimistic check is a single atomic statement), and D1's `CURRENT_TIMESTAMP` default carries second resolution — appends set `occurred_at` explicitly to a millisecond-precision UTC ISO string.
 

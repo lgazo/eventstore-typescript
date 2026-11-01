@@ -1,4 +1,4 @@
-import { EventQuery } from '@ricofritzsche/eventstore';
+import { EventQuery } from '@lgazo/eventstore';
 
 export interface SqlQuery { sql: string; params: unknown[] }
 

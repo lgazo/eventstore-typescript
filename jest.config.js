@@ -20,13 +20,13 @@ module.exports = {
   moduleFileExtensions: ['ts', 'js', 'json'],
   setupFilesAfterEnv: [],
   moduleNameMapper: {
-    '^@ricofritzsche/eventstore$': '<rootDir>/src/index.ts',
-    '^@ricofritzsche/eventstore/(.*)$': '<rootDir>/src/$1',
-    '^@ricofritzsche/eventstore-postgres$': '<rootDir>/packages/postgres/src/index.ts',
-    '^@ricofritzsche/eventstore-postgres/(.*)$': '<rootDir>/packages/postgres/src/$1',
-    '^@ricofritzsche/eventstore-supabase$': '<rootDir>/packages/supabase/src/index.ts',
-    '^@ricofritzsche/eventstore-supabase/(.*)$': '<rootDir>/packages/supabase/src/$1',
-    '^@ricofritzsche/eventstore-d1$': '<rootDir>/packages/d1/src/index.ts',
-    '^@ricofritzsche/eventstore-d1/(.*)$': '<rootDir>/packages/d1/src/$1'
+    '^@lgazo/eventstore$': '<rootDir>/src/index.ts',
+    '^@lgazo/eventstore/(.*)$': '<rootDir>/src/$1',
+    '^@lgazo/eventstore-postgres$': '<rootDir>/packages/postgres/src/index.ts',
+    '^@lgazo/eventstore-postgres/(.*)$': '<rootDir>/packages/postgres/src/$1',
+    '^@lgazo/eventstore-supabase$': '<rootDir>/packages/supabase/src/index.ts',
+    '^@lgazo/eventstore-supabase/(.*)$': '<rootDir>/packages/supabase/src/$1',
+    '^@lgazo/eventstore-d1$': '<rootDir>/packages/d1/src/index.ts',
+    '^@lgazo/eventstore-d1/(.*)$': '<rootDir>/packages/d1/src/$1'
   }
 };

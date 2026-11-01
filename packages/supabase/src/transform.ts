@@ -1,4 +1,4 @@
-import { EventRecord } from '@ricofritzsche/eventstore';
+import { EventRecord } from '@lgazo/eventstore';
 
 function toSequenceNumber(value: unknown): number {
   const parsed = typeof value === 'number' ? value : Number(value);

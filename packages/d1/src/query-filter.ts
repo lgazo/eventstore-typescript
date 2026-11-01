@@ -1,4 +1,4 @@
-import { EventFilter, EventQuery, EventRecord } from '@ricofritzsche/eventstore';
+import { EventFilter, EventQuery, EventRecord } from '@lgazo/eventstore';
 
 export function filterEventsByQuery(events: EventRecord[], query?: EventQuery): EventRecord[] {
   if (!query) return events;

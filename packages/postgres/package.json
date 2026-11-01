@@ -1,7 +1,7 @@
 {
-  "name": "@ricofritzsche/eventstore-postgres",
+  "name": "@lgazo/eventstore-postgres",
   "version": "1.2.0",
-  "description": "PostgreSQL-backed store for @ricofritzsche/eventstore",
+  "description": "PostgreSQL-backed store for @lgazo/eventstore",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [
@@ -27,20 +27,23 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/ricofritzsche/eventstore-typescript"
+    "url": "git+https://github.com/lgazo/eventstore-typescript.git"
   },
   "bugs": {
-    "url": "https://github.com/ricofritzsche/eventstore-typescript/issues"
+    "url": "https://github.com/lgazo/eventstore-typescript/issues"
   },
-  "homepage": "https://github.com/ricofritzsche/eventstore-typescript#readme",
+  "homepage": "https://github.com/lgazo/eventstore-typescript#readme",
   "dependencies": {
     "pg": "^8.11.0",
-    "@ricofritzsche/eventstore": "lgazo/eventstore-typescript#main"
+    "@lgazo/eventstore": "github:lgazo/eventstore-typescript#main"
   },
   "devDependencies": {
     "@types/pg": "^8.10.0"
   },
   "engines": {
     "node": ">=18.19.0"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }

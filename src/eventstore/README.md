@@ -31,7 +31,7 @@ The EventStore module provides the core functionality for storing and retrieving
 
 ### PostgreSQL Implementation (`postgres` package)
 
-The PostgreSQL-backed store now lives inside the `packages/postgres` workspace package and imports the core APIs from `@ricofritzsche/eventstore`.
+The PostgreSQL-backed store now lives inside the `packages/postgres` workspace package and imports the core APIs from `@lgazo/eventstore`.
 
 **`src/store.ts`** - The main PostgreSQL implementation:
 - `PostgresEventStore` - Saves events to PostgreSQL database (available from the `postgres` package)
@@ -77,8 +77,8 @@ The PostgreSQL-backed store now lives inside the `packages/postgres` workspace p
 ## Simple Example
 
 ```typescript
-import { createFilter } from '@ricofritzsche/eventstore';
-import { PostgresEventStore } from '@ricofritzsche/eventstore-postgres';
+import { createFilter } from '@lgazo/eventstore';
+import { PostgresEventStore } from '@lgazo/eventstore-postgres';
 
 // Create event store with default MemoryEventStreamNotifier
 const eventStore = new PostgresEventStore();
@@ -116,8 +116,8 @@ await eventStore.close();
 You can provide your own notifier implementation:
 
 ```typescript
-import { EventStreamNotifier } from '@ricofritzsche/eventstore';
-import { PostgresEventStore } from '@ricofritzsche/eventstore-postgres';
+import { EventStreamNotifier } from '@lgazo/eventstore';
+import { PostgresEventStore } from '@lgazo/eventstore-postgres';
 
 class DatabaseEventStreamNotifier implements EventStreamNotifier {
   // Your custom implementation

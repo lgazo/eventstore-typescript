@@ -27,14 +27,14 @@
     "emitDecoratorMetadata": true,
     "baseUrl": ".",
     "paths": {
-      "@ricofritzsche/eventstore": ["src/index.ts"],
-      "@ricofritzsche/eventstore/*": ["src/*"],
-      "@ricofritzsche/eventstore-postgres": ["packages/postgres/src"],
-      "@ricofritzsche/eventstore-postgres/*": ["packages/postgres/src/*"],
-      "@ricofritzsche/eventstore-supabase": ["packages/supabase/src"],
-      "@ricofritzsche/eventstore-supabase/*": ["packages/supabase/src/*"],
-      "@ricofritzsche/eventstore-d1": ["packages/d1/src"],
-      "@ricofritzsche/eventstore-d1/*": ["packages/d1/src/*"]
+      "@lgazo/eventstore": ["src/index.ts"],
+      "@lgazo/eventstore/*": ["src/*"],
+      "@lgazo/eventstore-postgres": ["packages/postgres/src"],
+      "@lgazo/eventstore-postgres/*": ["packages/postgres/src/*"],
+      "@lgazo/eventstore-supabase": ["packages/supabase/src"],
+      "@lgazo/eventstore-supabase/*": ["packages/supabase/src/*"],
+      "@lgazo/eventstore-d1": ["packages/d1/src"],
+      "@lgazo/eventstore-d1/*": ["packages/d1/src/*"]
     }
   },
   "include": [

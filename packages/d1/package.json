@@ -1,7 +1,7 @@
 {
-  "name": "@ricofritzsche/eventstore-d1",
+  "name": "@lgazo/eventstore-d1",
   "version": "1.2.0",
-  "description": "Cloudflare D1-backed store for @ricofritzsche/eventstore",
+  "description": "Cloudflare D1-backed store for @lgazo/eventstore",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [
@@ -28,16 +28,19 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/ricofritzsche/eventstore-typescript"
+    "url": "git+https://github.com/lgazo/eventstore-typescript.git"
   },
   "bugs": {
-    "url": "https://github.com/ricofritzsche/eventstore-typescript/issues"
+    "url": "https://github.com/lgazo/eventstore-typescript/issues"
   },
-  "homepage": "https://github.com/ricofritzsche/eventstore-typescript#readme",
+  "homepage": "https://github.com/lgazo/eventstore-typescript#readme",
   "dependencies": {
-    "@ricofritzsche/eventstore": "lgazo/eventstore-typescript#main"
+    "@lgazo/eventstore": "github:lgazo/eventstore-typescript#main"
   },
   "engines": {
     "node": ">=18.19.0"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }

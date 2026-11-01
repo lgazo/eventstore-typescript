@@ -11,7 +11,7 @@ import {
   QueryResult,
   createFilter,
   createQuery,
-} from '@ricofritzsche/eventstore';
+} from '@lgazo/eventstore';
 
 import { D1Database } from './types';
 import { buildContextQuerySql, buildContextWhere, buildTenantScopeSql } from './sql';

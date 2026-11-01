@@ -1,0 +1,72 @@
+name: Publish
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    name: Publish packages to npm and create GitHub release
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          registry-url: https://registry.npmjs.org
+          scope: '@lgazo'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint, format check, build
+        run: |
+          npm run lint
+          npm run format:check
+          npm run build
+
+      # Tests need a running Postgres/Supabase instance, so they are not part
+      # of this workflow; artifacts are built here and verified via lint and
+      # build. --ignore-scripts skips the package-level prepublishOnly/prepack
+      # lifecycle (root prepublishOnly would re-run clean+build+test which
+      # needs a database); artifacts were already built in the step above.
+      - name: Publish to npm
+        run: npm publish --workspaces --include-workspace-root --ignore-scripts
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      # Build a release description from the published package versions and
+      # the commit subjects included in this release.
+      - name: Collect release notes
+        if: startsWith(github.ref, 'refs/tags/')
+        run: |
+          prev_tag="$(git describe --tags --abbrev=0 "${GITHUB_REF_NAME}^" 2>/dev/null || true)"
+          {
+            echo '## Published packages'
+            jq -r '"- `\(.name)` version \(.version)"' package.json packages/*/package.json
+            echo
+            if [ -n "$prev_tag" ]; then
+              echo "## Changes since $prev_tag"
+              git log --pretty='- %s' "$prev_tag..$GITHUB_REF_NAME" || true
+            else
+              echo '## Changes'
+              git log --pretty='- %s' "$GITHUB_REF_NAME" -1
+            fi
+          } > release-notes.md
+          cat release-notes.md
+
+      - name: Create GitHub release
+        if: startsWith(github.ref, 'refs/tags/')
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh release create "$GITHUB_REF_NAME" --verify-tag --title "$GITHUB_REF_NAME" --notes-file release-notes.md

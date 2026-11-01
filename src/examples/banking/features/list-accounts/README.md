@@ -90,7 +90,7 @@ The projection starts automatically when the banking CLI initializes:
 
 ```typescript
 import { startAccountProjectionListener } from './features/list-accounts';
-import { PostgresEventStore } from '@ricofritzsche/eventstore-postgres';
+import { PostgresEventStore } from '@lgazo/eventstore-postgres';
 
 // Initialize EventStore with subscription capability
 const eventStore = new PostgresEventStore();

@@ -27,8 +27,8 @@
     "emitDecoratorMetadata": true,
     "baseUrl": ".",
     "paths": {
-      "@ricofritzsche/eventstore": ["../../dist/index"],
-      "@ricofritzsche/eventstore/*": ["../../dist/*"]
+      "@lgazo/eventstore": ["../../dist/index"],
+      "@lgazo/eventstore/*": ["../../dist/*"]
     }
   },
   "include": [
