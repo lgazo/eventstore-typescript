@@ -25,6 +25,8 @@ module.exports = {
     '^@ricofritzsche/eventstore-postgres$': '<rootDir>/packages/postgres/src/index.ts',
     '^@ricofritzsche/eventstore-postgres/(.*)$': '<rootDir>/packages/postgres/src/$1',
     '^@ricofritzsche/eventstore-supabase$': '<rootDir>/packages/supabase/src/index.ts',
-    '^@ricofritzsche/eventstore-supabase/(.*)$': '<rootDir>/packages/supabase/src/$1'
+    '^@ricofritzsche/eventstore-supabase/(.*)$': '<rootDir>/packages/supabase/src/$1',
+    '^@ricofritzsche/eventstore-d1$': '<rootDir>/packages/d1/src/index.ts',
+    '^@ricofritzsche/eventstore-d1/(.*)$': '<rootDir>/packages/d1/src/$1'
   }
 };

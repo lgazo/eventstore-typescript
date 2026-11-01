@@ -32,7 +32,9 @@
       "@ricofritzsche/eventstore-postgres": ["packages/postgres/src"],
       "@ricofritzsche/eventstore-postgres/*": ["packages/postgres/src/*"],
       "@ricofritzsche/eventstore-supabase": ["packages/supabase/src"],
-      "@ricofritzsche/eventstore-supabase/*": ["packages/supabase/src/*"]
+      "@ricofritzsche/eventstore-supabase/*": ["packages/supabase/src/*"],
+      "@ricofritzsche/eventstore-d1": ["packages/d1/src"],
+      "@ricofritzsche/eventstore-d1/*": ["packages/d1/src/*"]
     }
   },
   "include": [
