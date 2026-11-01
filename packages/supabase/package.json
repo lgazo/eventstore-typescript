@@ -34,7 +34,7 @@
   "homepage": "https://github.com/lgazo/eventstore-typescript#readme",
   "dependencies": {
     "@supabase/supabase-js": "^2.57.4",
-    "@lgazo/eventstore": "github:lgazo/eventstore-typescript#main"
+    "@lgazo/eventstore": "^1.1.0"
   },
   "engines": {
     "node": ">=18.19.0"

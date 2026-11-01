@@ -1,14 +1,13 @@
-import {
-  parsePostgresConnectionString,
-  PostgresEventStore,
-} from '../store';
+import { parsePostgresConnectionString, PostgresEventStore } from '../store';
 
 const BASE = 'postgresql://user:pass@localhost:5432/myapp';
 
 describe('PostgresEventStore construction', () => {
   describe('parsePostgresConnectionString', () => {
     it('should extract and strip table and tenantId params', () => {
-      const parsed = parsePostgresConnectionString(`${BASE}?sslmode=disable&table=events_spa&tenantId=tenant-1`);
+      const parsed = parsePostgresConnectionString(
+        `${BASE}?sslmode=disable&table=events_spa&tenantId=tenant-1`
+      );
       expect(parsed.connectionString).toBe(`${BASE}?sslmode=disable`);
       expect(parsed.tableName).toBe('events_spa');
       expect(parsed.tenantId).toBe('tenant-1');
@@ -28,13 +27,15 @@ describe('PostgresEventStore construction', () => {
     });
 
     it('should reject keyword/value connection strings with err13', () => {
-      expect(() => parsePostgresConnectionString('host=localhost dbname=myapp'))
-        .toThrow('eventstore-stores-postgres-err13');
+      expect(() => parsePostgresConnectionString('host=localhost dbname=myapp')).toThrow(
+        'eventstore-stores-postgres-err13'
+      );
     });
 
     it('should reject keyword/value connection strings at construction with err13', () => {
-      expect(() => new PostgresEventStore({ connectionString: 'host=localhost dbname=myapp' }))
-        .toThrow('eventstore-stores-postgres-err13');
+      expect(
+        () => new PostgresEventStore({ connectionString: 'host=localhost dbname=myapp' })
+      ).toThrow('eventstore-stores-postgres-err13');
     });
   });
 
@@ -64,18 +65,21 @@ describe('PostgresEventStore construction', () => {
     });
 
     it('should reject empty table name with err11', () => {
-      expect(() => new PostgresEventStore({ connectionString: BASE, tableName: '' }))
-        .toThrow('eventstore-stores-postgres-err11');
+      expect(() => new PostgresEventStore({ connectionString: BASE, tableName: '' })).toThrow(
+        'eventstore-stores-postgres-err11'
+      );
     });
 
     it('should reject table name containing null byte with err11', () => {
-      expect(() => new PostgresEventStore({ connectionString: BASE, tableName: 'eve\u0000nts' }))
-        .toThrow('eventstore-stores-postgres-err11');
+      expect(
+        () => new PostgresEventStore({ connectionString: BASE, tableName: 'eve\u0000nts' })
+      ).toThrow('eventstore-stores-postgres-err11');
     });
 
     it('should reject empty tenant id with err12', () => {
-      expect(() => new PostgresEventStore({ connectionString: BASE, tenantId: '' }))
-        .toThrow('eventstore-stores-postgres-err12');
+      expect(() => new PostgresEventStore({ connectionString: BASE, tenantId: '' })).toThrow(
+        'eventstore-stores-postgres-err12'
+      );
     });
   });
 });

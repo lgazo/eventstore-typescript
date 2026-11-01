@@ -38,10 +38,9 @@ jobs:
       # Tests need a running Postgres/Supabase instance, so they are not part
       # of this workflow; artifacts are built here and verified via lint and
       # build. --ignore-scripts skips the package-level prepublishOnly/prepack
-      # lifecycle (root prepublishOnly would re-run clean+build+test which
-      # needs a database); artifacts were already built in the step above.
+      # lifecycle; artifacts were already built in the step above.
       - name: Publish to npm
-        run: npm publish --workspaces --include-workspace-root --ignore-scripts
+        run: npm publish --workspaces --ignore-scripts
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 

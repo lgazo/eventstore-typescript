@@ -73,7 +73,7 @@ The system is built around a core EventStore with pluggable notification system.
 
 ## Core Modules
 
-### **EventStore Module** (`src/eventstore/`)
+### **EventStore Module** (`packages/core/src/eventstore/`)
 
 **Purpose**: Persistent event storage with real-time notifications
 
@@ -93,7 +93,7 @@ The system is built around a core EventStore with pluggable notification system.
 - Notify subscribers immediately when events are appended
 - Manage subscription lifecycle
 
-### **Examples** (`src/examples/banking/`)
+### **Examples** (`packages/core/src/examples/banking/`)
 
 **Purpose**: Feature-sliced banking application demonstrating real-world usage
 

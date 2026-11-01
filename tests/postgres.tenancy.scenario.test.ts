@@ -1,4 +1,4 @@
-import { createFilter, createQuery, Event } from '../src/eventstore';
+import { createFilter, createQuery, Event } from '@lgazo/eventstore';
 import { PostgresEventStore } from '@lgazo/eventstore-postgres';
 import dotenv from 'dotenv';
 

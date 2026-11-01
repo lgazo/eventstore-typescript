@@ -1,0 +1,50 @@
+{
+  "name": "@lgazo/eventstore",
+  "version": "1.1.0",
+  "description": "A TypeScript event sourcing library with Postgres persistence, real-time subscriptions, and projection support for building responsive event-sourced applications",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist/**/*",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "build:watch": "tsc -p tsconfig.json --watch",
+    "clean": "rm -rf dist"
+  },
+  "keywords": [
+    "eventstore",
+    "event-sourcing",
+    "eventsourcing",
+    "typescript",
+    "events",
+    "postgresql",
+    "postgres",
+    "real-time",
+    "subscriptions",
+    "projections",
+    "event-driven",
+    "cqrs"
+  ],
+  "author": "Rico Fritzsche",
+  "contributors": [
+    "Ralf Westphal"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lgazo/eventstore-typescript.git"
+  },
+  "bugs": {
+    "url": "https://github.com/lgazo/eventstore-typescript/issues"
+  },
+  "homepage": "https://github.com/lgazo/eventstore-typescript#readme",
+  "publishConfig": {
+    "access": "public"
+  },
+  "engines": {
+    "node": ">=18.19.0"
+  }
+}
