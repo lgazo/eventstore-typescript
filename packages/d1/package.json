@@ -35,7 +35,7 @@
   },
   "homepage": "https://github.com/lgazo/eventstore-typescript#readme",
   "dependencies": {
-    "@lgazo/eventstore": "^1.1.0"
+    "@lgazo/eventstore": "^1.2.0"
   },
   "engines": {
     "node": ">=18.19.0"

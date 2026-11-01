@@ -1,6 +1,6 @@
 {
   "name": "@lgazo/eventstore-supabase",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "Supabase-backed store for @lgazo/eventstore",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -34,7 +34,7 @@
   "homepage": "https://github.com/lgazo/eventstore-typescript#readme",
   "dependencies": {
     "@supabase/supabase-js": "^2.57.4",
-    "@lgazo/eventstore": "^1.1.0"
+    "@lgazo/eventstore": "^1.2.0"
   },
   "engines": {
     "node": ">=18.19.0"

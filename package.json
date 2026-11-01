@@ -23,7 +23,8 @@
     "lint": "eslint 'packages/**/src/**/*.ts' --ignore-pattern '**/__tests__/**' --no-warn-ignored",
     "lint:fix": "eslint 'packages/**/src/**/*.ts' --ignore-pattern '**/__tests__/**' --no-warn-ignored --fix",
     "format": "prettier --write 'packages/**/src/**/*.ts'",
-    "format:check": "prettier --check 'packages/**/src/**/*.ts'"
+    "format:check": "prettier --check 'packages/**/src/**/*.ts'",
+    "version:lockstep": "node scripts/lockstep-version.mjs"
   },
   "license": "MIT",
   "devDependencies": {
