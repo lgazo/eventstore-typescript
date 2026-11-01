@@ -70,3 +70,59 @@ test('nested object predicates are refused', async () => {
   const { store } = await fresh();
   await expect(store.query(createQuery(createFilter(['X'], [{ a: { b: 1 } }])))).rejects.toThrow(/err06/);
 });
+
+import { buildContextQuerySql, buildTenantScopeSql } from '../sql';
+
+test('buildTenantScopeSql scopes shared when no tenant, tenant otherwise', () => {
+  expect(buildTenantScopeSql()).toEqual({ sql: 'tenant_id IS NULL', params: [] });
+  expect(buildTenantScopeSql('tn_a')).toEqual({ sql: 'tenant_id = ?', params: ['tn_a'] });
+});
+
+test('query SQL honours tenant scope and minSequenceNumber', () => {
+  const f = createFilter(['DraftOpened'], [{ proposalId: 'prp_a' }]);
+  const q = createQuery({ minSequenceNumber: 5 }, f);
+  const sqlQuery = buildContextQuerySql(q, 'tn_a');
+  expect(sqlQuery.sql).toContain('tenant_id = ?');
+  expect(sqlQuery.sql).toContain('sequence_number > ?');
+  expect(sqlQuery.params).toEqual(['tn_a', 'DraftOpened', 'prp_a', 5]);
+});
+
+test('tenant-scoped stores on one db see only their rows and check sequences per scope', async () => {
+  const db = nodeSqliteD1();
+  const shared = new D1EventStore({ database: db });
+  const tenantA = new D1EventStore({ database: db, tenantId: 'tn_a' });
+  await shared.initializeDatabase();
+  await tenantA.initializeDatabase();
+  const fs = createFilter(['A'], [{ k: 's' }]);
+  const fa = createFilter(['A'], [{ k: 'a' }]);
+  await shared.append([ev('A', { k: 's' })], fs, 0);
+  await tenantA.append([ev('A', { k: 'a' })], fa, 0);
+  expect((await tenantA.query(fa)).events.map((e) => e.payload.k)).toEqual(['a']);
+  expect((await shared.query(fs)).events.map((e) => e.payload.k)).toEqual(['s']);
+  expect((await tenantA.query(fa)).maxSequenceNumber).toBe(2);
+  await expect(tenantA.append([ev('A', { k: 'nope' })], fa, 0)).rejects.toThrow(/err03/);
+});
+
+test('occurred_at is bound ISO with millisecond precision', async () => {
+  const { store } = await fresh();
+  const f = createFilter(['T'], [{ key: 'v' }]);
+  await store.append([ev('T', { key: 'v' })], f, 0);
+  const { events } = await store.query(f);
+  expect(events[0]!.timestamp.toISOString()).toMatch(/\.\d{3}Z$/);
+});
+
+test('initializeDatabase migrates a legacy table without tenant_id', async () => {
+  const db = nodeSqliteD1();
+  db.raw.exec(
+    'CREATE TABLE events (sequence_number INTEGER PRIMARY KEY AUTOINCREMENT, occurred_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, event_type TEXT NOT NULL, payload TEXT NOT NULL)'
+  );
+  const store = new D1EventStore({ database: db });
+  await store.initializeDatabase();
+  const f = createFilter(['A'], []);
+  await store.append([ev('A', {})], f, 0);
+  expect((await store.query(f)).events).toHaveLength(1);
+});
+
+test('empty tenant id is rejected', () => {
+  expect(() => new D1EventStore({ database: nodeSqliteD1(), tenantId: '' })).toThrow(/err07/);
+});

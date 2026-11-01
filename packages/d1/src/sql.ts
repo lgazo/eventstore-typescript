@@ -32,7 +32,23 @@ export function buildContextWhere(query?: EventQuery): { where: string; params: 
   return { where: ors.join(' OR '), params };
 }
 
-export function buildContextQuerySql(query?: EventQuery): SqlQuery {
-  const { where, params } = buildContextWhere(query);
-  return { sql: `SELECT sequence_number, occurred_at, event_type, payload FROM events WHERE ${where} ORDER BY sequence_number ASC`, params };
+/** Tenant scope clause: shared stream reads/writes tenant_id IS NULL rows, tenant store its own rows. */
+export function buildTenantScopeSql(tenantId?: string): SqlQuery {
+  if (tenantId === undefined) return { sql: 'tenant_id IS NULL', params: [] };
+  return { sql: 'tenant_id = ?', params: [tenantId] };
+}
+
+export function buildContextQuerySql(query?: EventQuery, tenantId?: string): SqlQuery {
+  const tenant = buildTenantScopeSql(tenantId);
+  const { where, params: filterParams } = buildContextWhere(query);
+  const clauses = [tenant.sql, `(${where})`];
+  const params: unknown[] = [...tenant.params, ...filterParams];
+  if (query?.options?.minSequenceNumber !== undefined) {
+    clauses.push('sequence_number > ?');
+    params.push(query.options.minSequenceNumber);
+  }
+  return {
+    sql: `SELECT sequence_number, occurred_at, event_type, payload FROM events WHERE ${clauses.join(' AND ')} ORDER BY sequence_number ASC`,
+    params,
+  };
 }

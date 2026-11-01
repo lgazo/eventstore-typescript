@@ -14,33 +14,46 @@ import {
 } from '@ricofritzsche/eventstore';
 
 import { D1Database } from './types';
-import { buildContextQuerySql, buildContextWhere } from './sql';
+import { buildContextQuerySql, buildContextWhere, buildTenantScopeSql } from './sql';
 import { filterEventsByQuery } from './query-filter';
 import { mapRowsToEvents, extractMaxSequenceNumber, EventRow } from './transform';
-import { CREATE_EVENTS_TABLE, CREATE_EVENT_TYPE_INDEX, CREATE_OCCURRED_AT_INDEX } from './schema';
+import {
+  CREATE_EVENTS_TABLE,
+  CREATE_EVENT_TYPE_INDEX,
+  CREATE_OCCURRED_AT_INDEX,
+  ALTER_EVENTS_ADD_TENANT_ID,
+} from './schema';
 
 const NON_EXISTENT_EVENT_TYPE = '__NON_EXISTENT__' + Math.random().toString(36);
 
 export interface D1EventStoreOptions {
   database: D1Database;
+  /** When set, the store reads and writes only rows of this tenant; otherwise only shared (tenant_id IS NULL) rows. */
+  tenantId?: string;
   notifier?: EventStreamNotifier;
 }
 
 /**
  * D1EventStore provides an EventStore implementation using Cloudflare D1 (SQLite) as its persistence layer.
- * It mirrors the API of the Postgres store while relying on transactions and in-memory predicate checks
- * to guarantee optimistic concurrency semantics.
+ * It mirrors the API of the Postgres store. Optimistic concurrency rides a single atomic conditional
+ * INSERT (D1 has no interactive transactions) and payload predicates keep the SQL pre-filter + JS
+ * subset post-filter split.
  */
 export class D1EventStore implements EventStore {
   private readonly db: D1Database;
   private readonly notifier: EventStreamNotifier;
+  readonly tenantId: string | undefined;
 
   constructor(options: D1EventStoreOptions) {
     if (!options?.database) {
       throw new Error('eventstore-stores-d1-err01: D1 database missing. Pass the Cloudflare binding through the constructor.');
     }
+    if (options.tenantId !== undefined && options.tenantId.length === 0) {
+      throw new Error('eventstore-stores-d1-err07: Invalid tenant id. Tenant id must not be empty.');
+    }
 
     this.db = options.database;
+    this.tenantId = options.tenantId;
     this.notifier = options.notifier ?? new MemoryEventStreamNotifier();
   }
 
@@ -72,15 +85,26 @@ export class D1EventStore implements EventStore {
 
     const { query, expectedSequenceNumber } = this.normalizeAppendContext(filterCriteria, expectedMaxSequenceNumber);
 
-    const { where, params } = buildContextWhere(query);
+    // One atomic statement: the context max inside this store's scope is re-checked against the
+    // expectation right before the rows are inserted, so a concurrent append makes this one fail.
+    const tenantClause = buildTenantScopeSql(this.tenantId);
+    const { where, params: filterParams } = buildContextWhere(query);
+    const contextWhere = `${tenantClause.sql} AND (${where})`;
+    const contextParams = [...tenantClause.params, ...filterParams];
+
+    const occurredAt = new Date().toISOString();
+    const tenantValue = this.tenantId ?? null;
     const values = events.map(() => '(?, ?)').join(', ');
-    const sql = `INSERT INTO events (event_type, payload)
-      SELECT v.column1, json(v.column2) FROM (VALUES ${values}) AS v
-      WHERE (SELECT COALESCE(MAX(sequence_number), 0) FROM events WHERE ${where}) = ?
+    const sql = `INSERT INTO events (occurred_at, event_type, payload, tenant_id)
+      SELECT i.occurred_at, v.column1, json(v.column2), i.tenant_id FROM (VALUES ${values}) AS v,
+      (SELECT ? AS occurred_at, ? AS tenant_id) AS i
+      WHERE (SELECT COALESCE(MAX(sequence_number), 0) FROM events WHERE ${contextWhere}) = ?
       RETURNING sequence_number, occurred_at, event_type, payload`;
     const rows = await this.executeAll<EventRow>(sql, [
       ...events.flatMap((e) => [e.eventType, JSON.stringify(e.payload)]),
-      ...params,
+      occurredAt,
+      tenantValue,
+      ...contextParams,
       expectedSequenceNumber,
     ]);
     if (rows.length === 0) {
@@ -89,15 +113,26 @@ export class D1EventStore implements EventStore {
     await this.notifier.notify(mapRowsToEvents(rows));
   }
 
-  // AFAIK this won't work with CF
   async initializeDatabase(): Promise<void> {
     await this.exec(CREATE_EVENTS_TABLE);
     await this.exec(CREATE_EVENT_TYPE_INDEX);
     await this.exec(CREATE_OCCURRED_AT_INDEX);
+    await this.ensureTenantColumn();
   }
 
   async close(): Promise<void> {
     await this.notifier.close();
+  }
+
+  /** Legacy databases predate tenancy; a duplicate-column failure just means they are already migrated. */
+  private async ensureTenantColumn(): Promise<void> {
+    try {
+      await this.exec(ALTER_EVENTS_ADD_TENANT_ID);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      if (/duplicate column name/i.test(message)) return;
+      throw err;
+    }
   }
 
   private toEventQuery(filterCriteria: EventQuery | EventFilter): EventQuery {
@@ -135,7 +170,7 @@ export class D1EventStore implements EventStore {
   }
 
   private async runQuery(query?: EventQuery): Promise<EventRecord[]> {
-    const sqlQuery = buildContextQuerySql(query);
+    const sqlQuery = buildContextQuerySql(query, this.tenantId);
     const rows = await this.executeAll<EventRow>(sqlQuery.sql, sqlQuery.params);
     const events = mapRowsToEvents(rows);
     return filterEventsByQuery(events, query);

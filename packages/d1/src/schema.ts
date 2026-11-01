@@ -3,7 +3,8 @@ export const CREATE_EVENTS_TABLE = `
     sequence_number INTEGER PRIMARY KEY AUTOINCREMENT,
     occurred_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
     event_type TEXT NOT NULL,
-    payload TEXT NOT NULL
+    payload TEXT NOT NULL,
+    tenant_id TEXT NULL
   )
 `;
 
@@ -15,5 +16,5 @@ export const CREATE_OCCURRED_AT_INDEX = `
   CREATE INDEX IF NOT EXISTS idx_events_occurred_at ON events(occurred_at)
 `;
 
-export const createPayloadKeyIndex = (key: string) =>
-  `CREATE INDEX IF NOT EXISTS idx_events_${key} ON events(json_extract(payload, '$.${key}'))`;
+/** Migration for legacy deployments created before tenancy: NULL tenant_id = shared stream. */
+export const ALTER_EVENTS_ADD_TENANT_ID = `ALTER TABLE events ADD COLUMN tenant_id TEXT NULL`;
