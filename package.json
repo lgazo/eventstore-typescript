@@ -1,4 +1,5 @@
 {
+  "name": "eventstore-typescript",
   "private": true,
   "workspaces": [
     "packages/*"
@@ -19,10 +20,10 @@
     "test:supabase:scenario": "jest --runInBand tests/supabase.scenario.test.ts",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
-    "lint": "eslint packages/*/src/**/*.ts --ignore-pattern '**/__tests__/**' --no-warn-ignored",
-    "lint:fix": "eslint packages/*/src/**/*.ts --ignore-pattern '**/__tests__/**' --no-warn-ignored --fix",
-    "format": "prettier --write packages/*/src/**/*.ts",
-    "format:check": "prettier --check packages/*/src/**/*.ts"
+    "lint": "eslint 'packages/**/src/**/*.ts' --ignore-pattern '**/__tests__/**' --no-warn-ignored",
+    "lint:fix": "eslint 'packages/**/src/**/*.ts' --ignore-pattern '**/__tests__/**' --no-warn-ignored --fix",
+    "format": "prettier --write 'packages/**/src/**/*.ts'",
+    "format:check": "prettier --check 'packages/**/src/**/*.ts'"
   },
   "license": "MIT",
   "devDependencies": {

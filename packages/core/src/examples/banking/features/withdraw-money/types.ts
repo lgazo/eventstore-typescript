@@ -25,12 +25,11 @@ export interface MoneyWithdrawnEvent {
   timestamp: Date;
 }
 
-export type WithdrawError = 
+export type WithdrawError =
   | { type: 'InvalidAmount'; message: string }
   | { type: 'InvalidCurrency'; message: string }
   | { type: 'InsufficientFunds'; message: string }
   | { type: 'DuplicateWithdrawal'; message: string };
 
-export type WithdrawResult = 
-  | { success: true; event: MoneyWithdrawnEvent }
-  | { success: false; error: WithdrawError };
+export type WithdrawResult =
+  { success: true; event: MoneyWithdrawnEvent } | { success: false; error: WithdrawError };

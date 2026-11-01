@@ -8,20 +8,22 @@ export async function execute(
   eventStore: EventStore,
   command: TransferMoneyCommand
 ): Promise<TransferResult> {
-  const filter = createQuery(createFilter(
-    ['BankAccountOpened', 'MoneyDeposited', 'MoneyWithdrawn', 'MoneyTransferred'],
-    [
-      { accountId: command.fromAccountId },
-      { accountId: command.toAccountId },
-      { toAccountId: command.fromAccountId },
-      { fromAccountId: command.toAccountId }
-    ]
-  ));
-  
+  const filter = createQuery(
+    createFilter(
+      ['BankAccountOpened', 'MoneyDeposited', 'MoneyWithdrawn', 'MoneyTransferred'],
+      [
+        { accountId: command.fromAccountId },
+        { accountId: command.toAccountId },
+        { toAccountId: command.fromAccountId },
+        { fromAccountId: command.toAccountId },
+      ]
+    )
+  );
+
   const queryResult = await eventStore.query(filter);
   const state = foldTransferState(queryResult.events, command.fromAccountId, command.toAccountId);
   const result = decideTransfer(command, state);
-  
+
   if (!result.success) {
     return result;
   }
@@ -35,16 +37,14 @@ export async function execute(
       result.event.transferId,
       result.event.timestamp
     );
-    
+
     await eventStore.append([event], filter, queryResult.maxSequenceNumber);
-    
+
     return result;
   } catch (error) {
     return {
       success: false,
-      error: { type: 'InsufficientFunds', message: 'Failed to save transfer event' }
+      error: { type: 'InsufficientFunds', message: 'Failed to save transfer event' },
     };
   }
 }
-
-

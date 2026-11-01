@@ -5,4 +5,3 @@ export {
   parseSupabaseConnectionString,
 } from './store';
 export { createSupabaseSetupSql, SupabaseSetupSqlOptions } from './schema';
-

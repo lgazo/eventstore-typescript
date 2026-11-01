@@ -12,7 +12,12 @@ import {
   createQuery,
 } from '@lgazo/eventstore';
 import { buildContextQuerySql, buildAppendSql } from './sql';
-import { mapRecordsToEvents, extractMaxSequenceNumber, prepareInsertParams } from './transform';
+import {
+  mapRecordsToEvents,
+  extractMaxSequenceNumber,
+  prepareInsertParams,
+  EventRow,
+} from './transform';
 import {
   createEventsTableSql,
   createEventTypeIndexSql,
@@ -21,10 +26,11 @@ import {
   createTenantSequenceIndexSql,
   createDatabaseQuery,
   changeDatabaseInConnectionString,
-  getDatabaseNameFromConnectionString
+  getDatabaseNameFromConnectionString,
 } from './schema';
 
 import { Pool } from 'pg';
+import type { QueryResult as PgQueryResult } from 'pg';
 
 const NON_EXISTENT_EVENT_TYPE = '__NON_EXISTENT__' + Math.random().toString(36);
 
@@ -41,12 +47,17 @@ export interface ParsedPostgresConnectionString {
   tenantId?: string;
 }
 
-export function parsePostgresConnectionString(connectionString: string): ParsedPostgresConnectionString {
+export function parsePostgresConnectionString(
+  connectionString: string
+): ParsedPostgresConnectionString {
   let url: URL;
   try {
     url = new URL(connectionString);
   } catch (err) {
-    throw new Error('eventstore-stores-postgres-err13: Invalid connection string. URL parsing failed: ' + (err instanceof Error ? err.message : String(err)));
+    throw new Error(
+      'eventstore-stores-postgres-err13: Invalid connection string. URL parsing failed: ' +
+        (err instanceof Error ? err.message : String(err))
+    );
   }
   const tableName = url.searchParams.get('table') ?? undefined;
   const tenantId = url.searchParams.get('tenantId') ?? undefined;
@@ -60,7 +71,6 @@ export function parsePostgresConnectionString(connectionString: string): ParsedP
     ...(tenantId ? { tenantId } : {}),
   };
 }
-
 
 /**
  * Represents an implementation of an event store using Postgres as the underlying database.
@@ -77,25 +87,37 @@ export class PostgresEventStore implements EventStore {
 
   constructor(options: PostgresEventStoreOptions = {}) {
     const resolvedConnectionString = options.connectionString || process.env.DATABASE_URL;
-    if (!resolvedConnectionString) throw new Error('eventstore-stores-postgres-err02: Connection string missing. DATABASE_URL environment variable not set.');
+    if (!resolvedConnectionString)
+      throw new Error(
+        'eventstore-stores-postgres-err02: Connection string missing. DATABASE_URL environment variable not set.'
+      );
 
     const parsed = options.connectionString
       ? parsePostgresConnectionString(options.connectionString)
       : undefined;
 
-    const databaseNameFromConnectionString = getDatabaseNameFromConnectionString(resolvedConnectionString);
-    if (!databaseNameFromConnectionString) throw new Error('eventstore-stores-postgres-err03: Database name not found. Invalid connection string: ' + resolvedConnectionString);
+    const databaseNameFromConnectionString =
+      getDatabaseNameFromConnectionString(resolvedConnectionString);
+    if (!databaseNameFromConnectionString)
+      throw new Error(
+        'eventstore-stores-postgres-err03: Database name not found. Invalid connection string: ' +
+          resolvedConnectionString
+      );
     this.databaseName = databaseNameFromConnectionString;
 
     this.connectionString = parsed?.connectionString ?? resolvedConnectionString;
 
     this.tableName = options.tableName ?? parsed?.tableName ?? 'events';
     if (this.tableName.length === 0 || this.tableName.includes('\u0000')) {
-      throw new Error('eventstore-stores-postgres-err11: Invalid table name. Table name must not be empty or contain null bytes.');
+      throw new Error(
+        'eventstore-stores-postgres-err11: Invalid table name. Table name must not be empty or contain null bytes.'
+      );
     }
     this.tenantId = options.tenantId ?? parsed?.tenantId;
     if (this.tenantId !== undefined && this.tenantId.length === 0) {
-      throw new Error('eventstore-stores-postgres-err12: Invalid tenant id. Tenant id must not be empty.');
+      throw new Error(
+        'eventstore-stores-postgres-err12: Invalid tenant id. Tenant id must not be empty.'
+      );
     }
 
     this.pool = new Pool({ connectionString: this.connectionString });
@@ -109,16 +131,14 @@ export class PostgresEventStore implements EventStore {
     const client = await this.pool.connect();
     try {
       // If it's an EventFilter, wrap it in an EventQuery
-      const eventQuery = 'filters' in filterCriteria 
-        ? filterCriteria as EventQuery 
-        : createQuery(filterCriteria as EventFilter);
-      
+      const eventQuery = 'filters' in filterCriteria ? filterCriteria : createQuery(filterCriteria);
+
       const sqlQuery = buildContextQuerySql(eventQuery, this.tableName, this.tenantId);
       const result = await client.query(sqlQuery.sql, sqlQuery.params);
 
       return {
-        events: mapRecordsToEvents(result),
-        maxSequenceNumber: extractMaxSequenceNumber(result)
+        events: mapRecordsToEvents(result as PgQueryResult<EventRow>),
+        maxSequenceNumber: extractMaxSequenceNumber(result as PgQueryResult<EventRow>),
       };
     } finally {
       client.release();
@@ -129,11 +149,22 @@ export class PostgresEventStore implements EventStore {
     return this.notifier.subscribe(handle);
   }
 
-
   async append(events: Event[]): Promise<void>;
-  async append(events: Event[], filterCriteria: EventQuery, expectedMaxSequenceNumber: number): Promise<void>;
-  async append(events: Event[], filterCriteria: EventFilter, expectedMaxSequenceNumber: number): Promise<void>;
-  async append(events: Event[], filterCriteria?: EventQuery | EventFilter,  expectedMaxSequenceNumber?: number): Promise<void> {
+  async append(
+    events: Event[],
+    filterCriteria: EventQuery,
+    expectedMaxSequenceNumber: number
+  ): Promise<void>;
+  async append(
+    events: Event[],
+    filterCriteria: EventFilter,
+    expectedMaxSequenceNumber: number
+  ): Promise<void>;
+  async append(
+    events: Event[],
+    filterCriteria?: EventQuery | EventFilter,
+    expectedMaxSequenceNumber?: number
+  ): Promise<void> {
     if (events.length === 0) return;
 
     // Convert EventFilter to EventQuery if needed
@@ -154,23 +185,32 @@ export class PostgresEventStore implements EventStore {
     }
 
     if (expectedMaxSequenceNumber === undefined)
-      throw new Error('eventstore-stores-postgres-err04: Expected max sequence number is required when a filter is provided!')
+      throw new Error(
+        'eventstore-stores-postgres-err04: Expected max sequence number is required when a filter is provided!'
+      );
 
     const client = await this.pool.connect();
     try {
-      const cteQuery = buildAppendSql(eventQuery, expectedMaxSequenceNumber, this.tableName, this.tenantId);
+      const cteQuery = buildAppendSql(
+        eventQuery,
+        expectedMaxSequenceNumber,
+        this.tableName,
+        this.tenantId
+      );
       const params = prepareInsertParams(events, cteQuery.params);
 
       const result = await client.query(cteQuery.sql, params);
 
       if (result.rowCount === 0) {
-        throw new Error('eventstore-stores-postgres-err05: Context changed: events were modified between query() and append()');
+        throw new Error(
+          'eventstore-stores-postgres-err05: Context changed: events were modified between query() and append()'
+        );
       }
 
       // Convert inserted records to EventRecord[] and notify subscribers
-      const insertedEvents = mapRecordsToEvents(result);
+      // pg driver returns untyped rows; deserializeEvent validates sequence_number/occurred_at at runtime
+      const insertedEvents = mapRecordsToEvents(result as PgQueryResult<EventRow>);
       await this.notifier.notify(insertedEvents);
-
     } finally {
       client.release();
     }
@@ -202,7 +242,9 @@ export class PostgresEventStore implements EventStore {
       // unreachable admin database as non-fatal: the target already exists, so
       // fall through to createTableAndIndexes(). A genuinely missing database
       // surfaces as a clear error there instead.
-      console.log(`eventstore-stores-postgres-err06: admin database unreachable, assuming ${this.databaseName} already exists: ${err.message}`);
+      console.log(
+        `eventstore-stores-postgres-err06: admin database unreachable, assuming ${this.databaseName} already exists: ${err.message}`
+      );
       await adminPool.end().catch(() => {});
       return;
     }
@@ -212,7 +254,9 @@ export class PostgresEventStore implements EventStore {
       console.log(`Database created: ${this.databaseName}`);
     } catch (err: any) {
       if (err.code === '42P04') {
-        console.log(`eventstore-stores-postgres-err06: Database already exists: ${this.databaseName}`);
+        console.log(
+          `eventstore-stores-postgres-err06: Database already exists: ${this.databaseName}`
+        );
       } else {
         throw err;
       }

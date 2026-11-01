@@ -46,10 +46,14 @@ export class D1EventStore implements EventStore {
 
   constructor(options: D1EventStoreOptions) {
     if (!options?.database) {
-      throw new Error('eventstore-stores-d1-err01: D1 database missing. Pass the Cloudflare binding through the constructor.');
+      throw new Error(
+        'eventstore-stores-d1-err01: D1 database missing. Pass the Cloudflare binding through the constructor.'
+      );
     }
     if (options.tenantId !== undefined && options.tenantId.length === 0) {
-      throw new Error('eventstore-stores-d1-err07: Invalid tenant id. Tenant id must not be empty.');
+      throw new Error(
+        'eventstore-stores-d1-err07: Invalid tenant id. Tenant id must not be empty.'
+      );
     }
 
     this.db = options.database;
@@ -74,8 +78,16 @@ export class D1EventStore implements EventStore {
   }
 
   async append(events: Event[]): Promise<void>;
-  async append(events: Event[], filterCriteria: EventQuery, expectedMaxSequenceNumber: number): Promise<void>;
-  async append(events: Event[], filterCriteria: EventFilter, expectedMaxSequenceNumber: number): Promise<void>;
+  async append(
+    events: Event[],
+    filterCriteria: EventQuery,
+    expectedMaxSequenceNumber: number
+  ): Promise<void>;
+  async append(
+    events: Event[],
+    filterCriteria: EventFilter,
+    expectedMaxSequenceNumber: number
+  ): Promise<void>;
   async append(
     events: Event[],
     filterCriteria?: EventQuery | EventFilter,
@@ -83,7 +95,10 @@ export class D1EventStore implements EventStore {
   ): Promise<void> {
     if (events.length === 0) return;
 
-    const { query, expectedSequenceNumber } = this.normalizeAppendContext(filterCriteria, expectedMaxSequenceNumber);
+    const { query, expectedSequenceNumber } = this.normalizeAppendContext(
+      filterCriteria,
+      expectedMaxSequenceNumber
+    );
 
     // One atomic statement: the context max inside this store's scope is re-checked against the
     // expectation right before the rows are inserted, so a concurrent append makes this one fail.
@@ -108,7 +123,9 @@ export class D1EventStore implements EventStore {
       expectedSequenceNumber,
     ]);
     if (rows.length === 0) {
-      throw new Error('eventstore-stores-d1-err03: Context changed: events were modified between query() and append()');
+      throw new Error(
+        'eventstore-stores-d1-err03: Context changed: events were modified between query() and append()'
+      );
     }
     await this.notifier.notify(mapRowsToEvents(rows));
   }
@@ -160,7 +177,9 @@ export class D1EventStore implements EventStore {
     }
 
     if (expectedSequence === undefined) {
-      throw new Error('eventstore-stores-d1-err02: Expected max sequence number is required when a filter is provided!');
+      throw new Error(
+        'eventstore-stores-d1-err02: Expected max sequence number is required when a filter is provided!'
+      );
     }
 
     return {
@@ -177,11 +196,14 @@ export class D1EventStore implements EventStore {
   }
 
   private async executeAll<T>(sql: string, params: unknown[] = []): Promise<T[]> {
-    const statement = params.length > 0 ? this.db.prepare(sql).bind(...params) : this.db.prepare(sql);
+    const statement =
+      params.length > 0 ? this.db.prepare(sql).bind(...params) : this.db.prepare(sql);
 
     const result = await statement.run<T>();
     if (!result.success) {
-      throw new Error(`eventstore-stores-d1-err04: Query failed: ${result.error ?? 'Unknown error'}`);
+      throw new Error(
+        `eventstore-stores-d1-err04: Query failed: ${result.error ?? 'Unknown error'}`
+      );
     }
 
     return result.results ?? [];
@@ -190,7 +212,9 @@ export class D1EventStore implements EventStore {
   private async exec(sql: string): Promise<void> {
     const result = await this.db.prepare(sql).run();
     if (!result.success) {
-      throw new Error(`eventstore-stores-d1-err05: Statement failed: ${result.error ?? 'Unknown error'}`);
+      throw new Error(
+        `eventstore-stores-d1-err05: Statement failed: ${result.error ?? 'Unknown error'}`
+      );
     }
   }
 }

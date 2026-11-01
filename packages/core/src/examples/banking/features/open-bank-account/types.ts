@@ -15,7 +15,7 @@ export interface BankAccountOpenedEvent {
   openedAt: Date;
 }
 
-export type OpenAccountError = 
+export type OpenAccountError =
   | { type: 'InvalidCustomerName'; message: string }
   | { type: 'InvalidAccountType'; message: string }
   | { type: 'InvalidInitialDeposit'; message: string }
@@ -25,6 +25,5 @@ export interface OpenAccountState {
   existingCustomerNames: string[];
 }
 
-export type OpenAccountResult = 
-  | { success: true; event: BankAccountOpenedEvent }
-  | { success: false; error: OpenAccountError };
+export type OpenAccountResult =
+  { success: true; event: BankAccountOpenedEvent } | { success: false; error: OpenAccountError };

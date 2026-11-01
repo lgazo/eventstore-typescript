@@ -18,7 +18,7 @@ export class BankAccountOpenedEvent implements Event {
       accountType,
       initialDeposit,
       currency,
-      openedAt
+      openedAt,
     };
   }
 }

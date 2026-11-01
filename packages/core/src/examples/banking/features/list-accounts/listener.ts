@@ -1,9 +1,9 @@
 import { EventRecord, EventStore, HandleEvents } from '../../../../eventstore/types';
-import { 
-  handleAccountOpened, 
-  handleMoneyDeposited, 
-  handleMoneyWithdrawn, 
-  handleMoneyTransferred 
+import {
+  handleAccountOpened,
+  handleMoneyDeposited,
+  handleMoneyWithdrawn,
+  handleMoneyTransferred,
 } from './projector';
 
 /**

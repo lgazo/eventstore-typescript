@@ -34,4 +34,3 @@ export function deserializeEvent(row: Record<string, unknown>): EventRecord {
     payload: payload as Record<string, unknown>,
   };
 }
-

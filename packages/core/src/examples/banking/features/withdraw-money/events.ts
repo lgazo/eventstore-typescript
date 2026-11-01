@@ -16,7 +16,7 @@ export class MoneyWithdrawnEvent implements Event {
       amount,
       currency,
       withdrawalId,
-      timestamp
+      timestamp,
     };
   }
 }

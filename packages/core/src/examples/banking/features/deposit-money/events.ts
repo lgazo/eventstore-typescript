@@ -16,7 +16,7 @@ export class MoneyDepositedEvent implements Event {
       amount,
       currency,
       depositId,
-      timestamp
+      timestamp,
     };
   }
 }

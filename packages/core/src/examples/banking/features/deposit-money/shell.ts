@@ -8,11 +8,13 @@ export async function execute(
   eventStore: EventStore,
   command: DepositMoneyCommand
 ): Promise<DepositResult> {
-  const filter = createQuery(createFilter(['BankAccountOpened', 'MoneyDeposited'], [{ accountId: command.accountId }]));
+  const filter = createQuery(
+    createFilter(['BankAccountOpened', 'MoneyDeposited'], [{ accountId: command.accountId }])
+  );
   const queryResult = await eventStore.query(filter);
   const state = foldDepositState(queryResult.events, command.accountId);
   const result = decideDeposit(command, state);
-  
+
   if (!result.success) {
     return result;
   }
@@ -25,15 +27,14 @@ export async function execute(
       result.event.depositId,
       result.event.timestamp
     );
-    
+
     await eventStore.append([event], filter, queryResult.maxSequenceNumber);
-    
+
     return result;
   } catch (error) {
     return {
       success: false,
-      error: { type: 'InvalidAmount', message: 'Failed to save deposit event' }
+      error: { type: 'InvalidAmount', message: 'Failed to save deposit event' },
     };
   }
 }
-

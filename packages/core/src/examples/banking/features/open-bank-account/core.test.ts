@@ -12,9 +12,9 @@ describe('open-bank-account core', () => {
       const events = [
         { eventType: 'BankAccountOpened', payload: { customerName: 'John Doe' } },
         { eventType: 'BankAccountOpened', payload: { customerName: 'Jane Smith' } },
-        { eventType: 'MoneyDeposited', payload: { customerName: 'Not Relevant' } }
+        { eventType: 'MoneyDeposited', payload: { customerName: 'Not Relevant' } },
       ];
-      
+
       const result = foldOpenAccountState(events);
       expect(result.existingCustomerNames).toEqual(['John Doe', 'Jane Smith']);
     });
@@ -26,9 +26,9 @@ describe('open-bank-account core', () => {
         customerName: 'John Doe',
         accountType: 'checking',
         initialDeposit: 100,
-        currency: 'USD'
+        currency: 'USD',
       };
-      
+
       const result = validateOpenAccountCommand(command);
       expect(result).toBeNull();
     });
@@ -36,39 +36,39 @@ describe('open-bank-account core', () => {
     it('should return error for empty customer name', () => {
       const command: OpenBankAccountCommand = {
         customerName: '',
-        accountType: 'checking'
+        accountType: 'checking',
       };
-      
+
       const result = validateOpenAccountCommand(command);
       expect(result).toEqual({
         type: 'InvalidCustomerName',
-        message: 'Customer name is required'
+        message: 'Customer name is required',
       });
     });
 
     it('should return error for short customer name', () => {
       const command: OpenBankAccountCommand = {
         customerName: 'A',
-        accountType: 'checking'
+        accountType: 'checking',
       };
-      
+
       const result = validateOpenAccountCommand(command);
       expect(result).toEqual({
         type: 'InvalidCustomerName',
-        message: 'Customer name must be at least 2 characters'
+        message: 'Customer name must be at least 2 characters',
       });
     });
 
     it('should return error for invalid account type', () => {
       const command: OpenBankAccountCommand = {
         customerName: 'John Doe',
-        accountType: 'invalid'
+        accountType: 'invalid',
       };
-      
+
       const result = validateOpenAccountCommand(command);
       expect(result).toEqual({
         type: 'InvalidAccountType',
-        message: 'Account type must be one of: checking, savings'
+        message: 'Account type must be one of: checking, savings',
       });
     });
 
@@ -76,13 +76,13 @@ describe('open-bank-account core', () => {
       const command: OpenBankAccountCommand = {
         customerName: 'John Doe',
         accountType: 'checking',
-        initialDeposit: -100
+        initialDeposit: -100,
       };
-      
+
       const result = validateOpenAccountCommand(command);
       expect(result).toEqual({
         type: 'InvalidInitialDeposit',
-        message: 'Initial deposit cannot be negative'
+        message: 'Initial deposit cannot be negative',
       });
     });
 
@@ -90,13 +90,13 @@ describe('open-bank-account core', () => {
       const command: OpenBankAccountCommand = {
         customerName: 'John Doe',
         accountType: 'checking',
-        initialDeposit: 2000000
+        initialDeposit: 2000000,
       };
-      
+
       const result = validateOpenAccountCommand(command);
       expect(result).toEqual({
         type: 'InvalidInitialDeposit',
-        message: 'Initial deposit cannot exceed 1000000'
+        message: 'Initial deposit cannot exceed 1000000',
       });
     });
 
@@ -104,13 +104,13 @@ describe('open-bank-account core', () => {
       const command: OpenBankAccountCommand = {
         customerName: 'John Doe',
         accountType: 'checking',
-        currency: 'JPY'
+        currency: 'JPY',
       };
-      
+
       const result = validateOpenAccountCommand(command);
       expect(result).toEqual({
         type: 'InvalidCurrency',
-        message: 'Currency JPY is not supported'
+        message: 'Currency JPY is not supported',
       });
     });
   });
@@ -123,15 +123,15 @@ describe('open-bank-account core', () => {
         customerName: 'John Doe',
         accountType: 'checking',
         initialDeposit: 100,
-        currency: 'USD'
+        currency: 'USD',
       };
-      
+
       const state: OpenAccountState = {
-        existingCustomerNames: []
+        existingCustomerNames: [],
       };
-      
+
       const result = decideOpenAccount(command, accountId, state);
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.event.accountId).toBe(accountId);
@@ -144,15 +144,15 @@ describe('open-bank-account core', () => {
 
     it('should use defaults for optional fields', () => {
       const command: OpenBankAccountCommand = {
-        customerName: 'John Doe'
+        customerName: 'John Doe',
       };
-      
+
       const state: OpenAccountState = {
-        existingCustomerNames: []
+        existingCustomerNames: [],
       };
-      
+
       const result = decideOpenAccount(command, accountId, state);
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.event.accountType).toBe('checking');
@@ -164,20 +164,20 @@ describe('open-bank-account core', () => {
     it('should return error for duplicate customer name', () => {
       const command: OpenBankAccountCommand = {
         customerName: 'John Doe',
-        accountType: 'checking'
+        accountType: 'checking',
       };
-      
+
       const state: OpenAccountState = {
-        existingCustomerNames: ['John Doe', 'Jane Smith']
+        existingCustomerNames: ['John Doe', 'Jane Smith'],
       };
-      
+
       const result = decideOpenAccount(command, accountId, state);
-      
+
       expect(result.success).toBe(false);
       if (!result.success) {
         expect(result.error).toEqual({
           type: 'InvalidCustomerName',
-          message: 'Customer name already exists'
+          message: 'Customer name already exists',
         });
       }
     });
@@ -185,15 +185,15 @@ describe('open-bank-account core', () => {
     it('should trim customer name and check for duplicates', () => {
       const command: OpenBankAccountCommand = {
         customerName: '  John Doe  ',
-        accountType: 'checking'
+        accountType: 'checking',
       };
-      
+
       const state: OpenAccountState = {
-        existingCustomerNames: ['John Doe']
+        existingCustomerNames: ['John Doe'],
       };
-      
+
       const result = decideOpenAccount(command, accountId, state);
-      
+
       expect(result.success).toBe(false);
       if (!result.success) {
         expect(result.error.type).toBe('InvalidCustomerName');
@@ -203,15 +203,15 @@ describe('open-bank-account core', () => {
     it('should return error for invalid account type', () => {
       const command: OpenBankAccountCommand = {
         customerName: 'John Doe',
-        accountType: 'invalid'
+        accountType: 'invalid',
       };
-      
+
       const state: OpenAccountState = {
-        existingCustomerNames: []
+        existingCustomerNames: [],
       };
-      
+
       const result = decideOpenAccount(command, accountId, state);
-      
+
       expect(result.success).toBe(false);
       if (!result.success) {
         expect(result.error.type).toBe('InvalidAccountType');

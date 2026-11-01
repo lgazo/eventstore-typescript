@@ -6,7 +6,7 @@ export function createFilter(
 ): EventFilter {
   return {
     eventTypes,
-    ...(payloadPredicates && { payloadPredicates })
+    ...(payloadPredicates && { payloadPredicates }),
   };
 }
 
@@ -16,7 +16,7 @@ export function createQuery(...args: (QueryOptions | EventFilter)[]): EventQuery
   if (args.length === 0) return { filters: [] };
   const first = args[0]!;
   if (!('eventTypes' in first)) {
-    return { filters: args.slice(1) as EventFilter[], options: first as QueryOptions };
+    return { filters: args.slice(1) as EventFilter[], options: first };
   }
   return { filters: args as EventFilter[] };
 }

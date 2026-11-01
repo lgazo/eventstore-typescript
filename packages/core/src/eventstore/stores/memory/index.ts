@@ -1,11 +1,20 @@
-import { Event, EventStore, EventFilter, EventQuery, QueryResult, EventStreamNotifier, HandleEvents, EventSubscription, EventRecord } from '../../types';
+import {
+  Event,
+  EventStore,
+  EventFilter,
+  EventQuery,
+  QueryResult,
+  EventStreamNotifier,
+  HandleEvents,
+  EventSubscription,
+  EventRecord,
+} from '../../types';
 import { MemoryEventStreamNotifier } from '../../notifiers';
 import { createQuery } from '../../filter';
 
 import { EventStream } from './eventstream';
 import { processQuery } from './queryprocessor';
 import { ReadWriteLockFIFO } from './readwritelock';
-
 
 export class MemoryEventStore implements EventStore {
   protected eventStream = new EventStream();
@@ -38,71 +47,82 @@ export class MemoryEventStore implements EventStore {
   async query(eventFilter: EventFilter): Promise<QueryResult>;
   async query(queryOrFilter?: EventQuery | EventFilter): Promise<QueryResult> {
     // If it's an EventFilter, wrap it in an EventQuery
-    const eventQuery = queryOrFilter && !('filters' in queryOrFilter)
-      ? createQuery(queryOrFilter as EventFilter)
-      : queryOrFilter as EventQuery | undefined;
+    const eventQuery =
+      queryOrFilter && !('filters' in queryOrFilter) ? createQuery(queryOrFilter) : queryOrFilter;
 
     return await this.queryWithLock(eventQuery, this.lock);
   }
 
   private async queryWithLock(query?: EventQuery, lock?: ReadWriteLockFIFO): Promise<QueryResult> {
-    if (lock)
-        await lock.acquireRead();
+    if (lock) await lock.acquireRead();
     try {
-        const matchingEvents = processQuery(this.eventStream.eventRecords, query);
-        const maxSequenceNumber = matchingEvents.length > 0 ? matchingEvents[matchingEvents.length - 1]?.sequenceNumber : 0;
-        return {
-            events: matchingEvents,
-            maxSequenceNumber: maxSequenceNumber || 0
-        };
-    }
-    finally {
-        if (lock) lock.releaseRead();
+      const matchingEvents = processQuery(this.eventStream.eventRecords, query);
+      const maxSequenceNumber =
+        matchingEvents.length > 0 ? matchingEvents[matchingEvents.length - 1]?.sequenceNumber : 0;
+      return {
+        events: matchingEvents,
+        maxSequenceNumber: maxSequenceNumber || 0,
+      };
+    } finally {
+      if (lock) lock.releaseRead();
     }
   }
 
-  async queryAll(): Promise<QueryResult> {
+  queryAll(): Promise<QueryResult> {
     const events = this.eventStream.eventRecords;
-    const maxSequenceNumber = events.length > 0 ? events[events.length - 1]?.sequenceNumber || 0 : 0;
-    return {
+    const maxSequenceNumber =
+      events.length > 0 ? events[events.length - 1]?.sequenceNumber || 0 : 0;
+    return Promise.resolve({
       events,
-      maxSequenceNumber
-     };
+      maxSequenceNumber,
+    });
   }
-
 
   async append(events: Event[]): Promise<void>;
-  async append(events: Event[], filterCriteria: EventQuery, expectedMaxSequenceNumber: number): Promise<void>;
-  async append(events: Event[], filterCriteria: EventFilter, expectedMaxSequenceNumber: number): Promise<void>;
-  async append(events: Event[], queryOrFilter?: EventQuery | EventFilter,  expectedMaxSequenceNumber?: number): Promise<void> {
+  async append(
+    events: Event[],
+    filterCriteria: EventQuery,
+    expectedMaxSequenceNumber: number
+  ): Promise<void>;
+  async append(
+    events: Event[],
+    filterCriteria: EventFilter,
+    expectedMaxSequenceNumber: number
+  ): Promise<void>;
+  async append(
+    events: Event[],
+    queryOrFilter?: EventQuery | EventFilter,
+    expectedMaxSequenceNumber?: number
+  ): Promise<void> {
     let eventRecords: EventRecord[] = [];
     await this.lock.acquireWrite();
     try {
-        if (expectedMaxSequenceNumber !== undefined) {
-            // Convert EventFilter to EventQuery if needed
-            const eventQuery = queryOrFilter && !('filters' in queryOrFilter)
-              ? createQuery(queryOrFilter as EventFilter)
-              : queryOrFilter as EventQuery | undefined;
-              
-            const currentQueryResult = await this.queryWithLock(eventQuery, undefined);
-            if ((currentQueryResult).maxSequenceNumber !== expectedMaxSequenceNumber) {
-                throw new Error('eventstore-stores-memory-err05: Context changed: events were modified between query() and append()');
-            }
-        }
+      if (expectedMaxSequenceNumber !== undefined) {
+        // Convert EventFilter to EventQuery if needed
+        const eventQuery =
+          queryOrFilter && !('filters' in queryOrFilter)
+            ? createQuery(queryOrFilter)
+            : queryOrFilter;
 
-        eventRecords = this.eventStream.append(events);
-
-        if (this.writeThruFilename) {
-            await this.storeToFile(this.writeThruFilename);
+        const currentQueryResult = await this.queryWithLock(eventQuery, undefined);
+        if (currentQueryResult.maxSequenceNumber !== expectedMaxSequenceNumber) {
+          throw new Error(
+            'eventstore-stores-memory-err05: Context changed: events were modified between query() and append()'
+          );
         }
-    }
-    finally {
-        this.lock.releaseWrite();
+      }
+
+      eventRecords = this.eventStream.append(events);
+
+      if (this.writeThruFilename) {
+        await this.storeToFile(this.writeThruFilename);
+      }
+    } finally {
+      this.lock.releaseWrite();
     }
 
     await this.enqueueNotification(eventRecords);
   }
-
 
   async subscribe(handle: HandleEvents): Promise<EventSubscription> {
     return await this.notifier.subscribe(handle);
@@ -114,7 +134,6 @@ export class MemoryEventStore implements EventStore {
     return next;
   }
 
-
   async storeToFile(filename: string): Promise<void> {
     const fs = await import('node:fs/promises');
     const data = this.eventStream.serialize();
@@ -124,7 +143,7 @@ export class MemoryEventStore implements EventStore {
   static async createFromFile(
     filename: string,
     ignoreMissingFile: boolean = false,
-    writeThruMode: boolean = false,
+    writeThruMode: boolean = false
   ): Promise<MemoryEventStore> {
     const fs = await import('node:fs/promises');
 
@@ -146,5 +165,5 @@ export class MemoryEventStore implements EventStore {
       }
       throw error;
     }
-  }  
+  }
 }

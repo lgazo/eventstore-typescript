@@ -6,7 +6,7 @@ describe('EventFilter Functions', () => {
       const filter = createFilter(['AccountCreated', 'AccountUpdated']);
 
       expect(filter).toEqual({
-        eventTypes: ['AccountCreated', 'AccountUpdated']
+        eventTypes: ['AccountCreated', 'AccountUpdated'],
       });
     });
 
@@ -15,20 +15,17 @@ describe('EventFilter Functions', () => {
 
       expect(filter).toEqual({
         eventTypes: ['AccountCreated'],
-        payloadPredicates: [{ accountId: '123', active: true }]
+        payloadPredicates: [{ accountId: '123', active: true }],
       });
     });
 
     it('should create filter with multiple payload predicate options', () => {
-      const payloadOptions = [
-        { status: 'active' },
-        { status: 'pending' }
-      ];
+      const payloadOptions = [{ status: 'active' }, { status: 'pending' }];
       const filter = createFilter(['AccountCreated'], payloadOptions);
 
       expect(filter).toEqual({
         eventTypes: ['AccountCreated'],
-        payloadPredicates: payloadOptions
+        payloadPredicates: payloadOptions,
       });
     });
 
@@ -37,7 +34,7 @@ describe('EventFilter Functions', () => {
 
       expect(filter).toEqual({
         eventTypes: ['AccountCreated'],
-        payloadPredicates: [{ accountId: '123' }]
+        payloadPredicates: [{ accountId: '123' }],
       });
     });
 
@@ -46,7 +43,7 @@ describe('EventFilter Functions', () => {
 
       expect(filter).toEqual({
         eventTypes: ['AccountCreated'],
-        payloadPredicates: []
+        payloadPredicates: [],
       });
     });
 
@@ -54,7 +51,7 @@ describe('EventFilter Functions', () => {
       const filter = createFilter(['AccountCreated']);
 
       expect(filter).toEqual({
-        eventTypes: ['AccountCreated']
+        eventTypes: ['AccountCreated'],
       });
       expect(filter.payloadPredicates).toBeUndefined();
     });

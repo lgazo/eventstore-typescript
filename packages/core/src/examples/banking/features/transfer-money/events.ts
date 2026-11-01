@@ -18,7 +18,7 @@ export class MoneyTransferredEvent implements Event {
       amount,
       currency,
       transferId,
-      timestamp
+      timestamp,
     };
   }
 }

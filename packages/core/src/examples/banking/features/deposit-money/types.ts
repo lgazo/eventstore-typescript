@@ -20,7 +20,7 @@ export interface AccountBalance {
   currency: string;
 }
 
-export type DepositError = 
+export type DepositError =
   | { type: 'InvalidAmount'; message: string }
   | { type: 'InvalidCurrency'; message: string }
   | { type: 'DuplicateDeposit'; message: string };
@@ -30,6 +30,5 @@ export interface DepositState {
   existingDepositIds: string[];
 }
 
-export type DepositResult = 
-  | { success: true; event: MoneyDepositedEvent }
-  | { success: false; error: DepositError };
+export type DepositResult =
+  { success: true; event: MoneyDepositedEvent } | { success: false; error: DepositError };

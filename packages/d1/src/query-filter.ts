@@ -10,7 +10,10 @@ function matchesQuery(event: EventRecord, query: EventQuery): boolean {
 }
 
 function matchesFilter(event: EventRecord, filter: EventFilter): boolean {
-  return matchesEventType(event.eventType, filter.eventTypes) && matchesPredicates(event.payload, filter.payloadPredicates);
+  return (
+    matchesEventType(event.eventType, filter.eventTypes) &&
+    matchesPredicates(event.payload, filter.payloadPredicates)
+  );
 }
 
 function matchesEventType(eventType: string, eventTypes?: string[]): boolean {
@@ -20,7 +23,10 @@ function matchesEventType(eventType: string, eventTypes?: string[]): boolean {
   return true;
 }
 
-function matchesPredicates(payload: Record<string, unknown>, predicates?: Record<string, unknown>[]): boolean {
+function matchesPredicates(
+  payload: Record<string, unknown>,
+  predicates?: Record<string, unknown>[]
+): boolean {
   if (predicates && predicates.length > 0) {
     return predicates.some((predicate) => isSubset(payload, predicate));
   }

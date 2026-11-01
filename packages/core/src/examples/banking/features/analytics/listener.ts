@@ -1,7 +1,5 @@
 import { EventStore, EventRecord } from '../../../../eventstore/types';
-import { 
-  handleAccountOpened
-} from './projector';
+import { handleAccountOpened } from './projector';
 
 /**
  * Starts an analytics event listener, subscribing to events related to account analytics.
@@ -13,12 +11,12 @@ import {
  * @return {Promise<() => Promise<void>>} A promise that resolves to a cleanup function, which stops the event listener when invoked.
  */
 export async function startAnalyticsListener(
-  eventStore: EventStore, 
+  eventStore: EventStore,
   connectionString: string,
   tableName: string = 'account_analytics'
 ): Promise<() => Promise<void>> {
   console.log('🎯 Starting analytics event listener...');
-  
+
   const subscription = await eventStore.subscribe(async (events: EventRecord[]) => {
     for (const event of events) {
       try {
@@ -35,9 +33,9 @@ export async function startAnalyticsListener(
       }
     }
   });
-  
+
   console.log('✅ Analytics listener started successfully');
-  
+
   // Return cleanup function
   return async () => {
     console.log('🛑 Stopping analytics listener...');

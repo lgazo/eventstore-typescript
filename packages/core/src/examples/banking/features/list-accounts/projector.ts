@@ -2,10 +2,13 @@ import { Pool } from 'pg';
 import { EventRecord } from '../../../../eventstore/types';
 import { createFilter, createQuery } from '../../../../eventstore';
 
-export async function createAccountsTable(connectionString: string, tableName: string = 'accounts'): Promise<void> {
+export async function createAccountsTable(
+  connectionString: string,
+  tableName: string = 'accounts'
+): Promise<void> {
   const pool = new Pool({ connectionString });
   const client = await pool.connect();
-  
+
   try {
     await client.query(`
       CREATE TABLE IF NOT EXISTS ${tableName} (
@@ -19,7 +22,7 @@ export async function createAccountsTable(connectionString: string, tableName: s
         last_event_sequence_number BIGINT NOT NULL DEFAULT 0
       )
     `);
-    
+
     await client.query(`
       CREATE INDEX IF NOT EXISTS idx_${tableName}_customer_name ON ${tableName}(customer_name);
     `);
@@ -29,13 +32,18 @@ export async function createAccountsTable(connectionString: string, tableName: s
   }
 }
 
-export async function handleAccountOpened(event: EventRecord, connectionString: string, tableName: string = 'accounts'): Promise<void> {
+export async function handleAccountOpened(
+  event: EventRecord,
+  connectionString: string,
+  tableName: string = 'accounts'
+): Promise<void> {
   const pool = new Pool({ connectionString });
   const client = await pool.connect();
-  
+
   try {
-    const { accountId, customerName, accountType, initialDeposit, currency, openedAt } = event.payload;
-    
+    const { accountId, customerName, accountType, initialDeposit, currency, openedAt } =
+      event.payload;
+
     await client.query(
       `INSERT INTO ${tableName} 
        (account_id, customer_name, account_type, balance, currency, opened_at, last_updated_at, last_event_sequence_number) 
@@ -48,7 +56,15 @@ export async function handleAccountOpened(event: EventRecord, connectionString: 
          opened_at = EXCLUDED.opened_at,
          last_updated_at = NOW(),
          last_event_sequence_number = EXCLUDED.last_event_sequence_number`,
-      [accountId, customerName, accountType, initialDeposit || 0, currency || 'USD', openedAt || new Date(), event.sequenceNumber]
+      [
+        accountId,
+        customerName,
+        accountType,
+        initialDeposit || 0,
+        currency || 'USD',
+        openedAt || new Date(),
+        event.sequenceNumber,
+      ]
     );
   } finally {
     client.release();
@@ -56,13 +72,17 @@ export async function handleAccountOpened(event: EventRecord, connectionString: 
   }
 }
 
-export async function handleMoneyDeposited(event: EventRecord, connectionString: string, tableName: string = 'accounts'): Promise<void> {
+export async function handleMoneyDeposited(
+  event: EventRecord,
+  connectionString: string,
+  tableName: string = 'accounts'
+): Promise<void> {
   const pool = new Pool({ connectionString });
   const client = await pool.connect();
-  
+
   try {
     const { accountId, amount, currency } = event.payload;
-    
+
     await client.query(
       `UPDATE ${tableName} 
        SET balance = balance + $1, last_updated_at = NOW(), last_event_sequence_number = $4
@@ -75,13 +95,17 @@ export async function handleMoneyDeposited(event: EventRecord, connectionString:
   }
 }
 
-export async function handleMoneyWithdrawn(event: EventRecord, connectionString: string, tableName: string = 'accounts'): Promise<void> {
+export async function handleMoneyWithdrawn(
+  event: EventRecord,
+  connectionString: string,
+  tableName: string = 'accounts'
+): Promise<void> {
   const pool = new Pool({ connectionString });
   const client = await pool.connect();
-  
+
   try {
     const { accountId, amount, currency } = event.payload;
-    
+
     await client.query(
       `UPDATE ${tableName} 
        SET balance = balance - $1, last_updated_at = NOW(), last_event_sequence_number = $4
@@ -94,10 +118,14 @@ export async function handleMoneyWithdrawn(event: EventRecord, connectionString:
   }
 }
 
-export async function handleMoneyTransferred(event: EventRecord, connectionString: string, tableName: string = 'accounts'): Promise<void> {
+export async function handleMoneyTransferred(
+  event: EventRecord,
+  connectionString: string,
+  tableName: string = 'accounts'
+): Promise<void> {
   const pool = new Pool({ connectionString });
   const client = await pool.connect();
-  
+
   try {
     const { fromAccountId, toAccountId, amount, currency } = event.payload;
 
@@ -120,20 +148,26 @@ export async function handleMoneyTransferred(event: EventRecord, connectionStrin
   }
 }
 
-export async function rebuildAccountProjections(eventStore: any, connectionString: string, tableName: string = 'accounts'): Promise<void> {
+export async function rebuildAccountProjections(
+  eventStore: any,
+  connectionString: string,
+  tableName: string = 'accounts'
+): Promise<void> {
   const pool = new Pool({ connectionString });
   const client = await pool.connect();
-  
+
   try {
     // Clear existing projection data
     await client.query(`DELETE FROM ${tableName}`);
     console.log('🗑️  Cleared existing account projections');
-    
+
     // Query all events from the event store using createFilter
-    const filter = createQuery(createFilter(['BankAccountOpened', 'MoneyDeposited', 'MoneyWithdrawn', 'MoneyTransferred']));
+    const filter = createQuery(
+      createFilter(['BankAccountOpened', 'MoneyDeposited', 'MoneyWithdrawn', 'MoneyTransferred'])
+    );
     const { events } = await eventStore.query(filter);
     console.log(`📥 Found ${events.length} events to replay`);
-    
+
     // Replay all events in sequence order
     for (const event of events) {
       switch (event.eventType) {
@@ -151,7 +185,7 @@ export async function rebuildAccountProjections(eventStore: any, connectionStrin
           break;
       }
     }
-    
+
     console.log('✅ Account projections rebuilt successfully');
   } finally {
     client.release();

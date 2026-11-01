@@ -1,4 +1,10 @@
-import { EventRecord, EventStreamNotifier, EventSubscription, HandleEvents, Subscription } from '../../types';
+import {
+  EventRecord,
+  EventStreamNotifier,
+  EventSubscription,
+  HandleEvents,
+  Subscription,
+} from '../../types';
 
 /**
  * MemoryEventStreamNotifier is an in-memory implementation of the EventStreamNotifier interface.
@@ -9,18 +15,19 @@ export class MemoryEventStreamNotifier implements EventStreamNotifier {
   private subscriptions: Map<string, Subscription> = new Map();
   private subscriptionCounter = 0;
 
-  async subscribe(handle: HandleEvents): Promise<EventSubscription> {
+  subscribe(handle: HandleEvents): Promise<EventSubscription> {
     const id = `notifier-sub-${++this.subscriptionCounter}`;
     const subscription: Subscription = { id, handle };
-    
+
     this.subscriptions.set(id, subscription);
-    
-    return {
+
+    return Promise.resolve({
       id,
-      unsubscribe: async () => {
+      unsubscribe: () => {
         this.subscriptions.delete(id);
-      }
-    };
+        return Promise.resolve();
+      },
+    });
   }
 
   async notify(events: EventRecord[]): Promise<void> {
@@ -30,14 +37,18 @@ export class MemoryEventStreamNotifier implements EventStreamNotifier {
       try {
         await subscription.handle(events);
       } catch (error) {
-        console.error(`notifiers-memory-err01: Error notifying subscription ${subscription.id}:`, error);
+        console.error(
+          `notifiers-memory-err01: Error notifying subscription ${subscription.id}:`,
+          error
+        );
       }
     });
 
     await Promise.allSettled(processPromises);
   }
 
-  async close(): Promise<void> {
+  close(): Promise<void> {
     this.subscriptions.clear();
+    return Promise.resolve();
   }
 }

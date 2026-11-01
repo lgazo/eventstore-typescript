@@ -1,1 +1,6 @@
-export { PostgresEventStore, PostgresEventStoreOptions, parsePostgresConnectionString, ParsedPostgresConnectionString } from './store';
+export {
+  PostgresEventStore,
+  PostgresEventStoreOptions,
+  parsePostgresConnectionString,
+  ParsedPostgresConnectionString,
+} from './store';

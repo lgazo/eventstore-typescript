@@ -15,7 +15,7 @@ dotenv.config();
 
 const rl = readline.createInterface({
   input: process.stdin,
-  output: process.stdout
+  output: process.stdout,
 });
 
 class BankingCLI {
@@ -30,18 +30,24 @@ class BankingCLI {
   async start() {
     try {
       await this.eventStore.initializeDatabase();
-      
+
       const connectionString = process.env.DATABASE_URL;
       if (!connectionString) {
         throw new Error('DATABASE_URL environment variable is required');
       }
-      
+
       await ListAccounts.createAccountsTable(connectionString);
       await Analytics.createAnalyticsTable(connectionString);
-      
-      this.stopAccountsListener = await ListAccounts.startAccountProjectionListener(this.eventStore, connectionString);
-      this.stopAnalyticsListener = await Analytics.startAnalyticsListener(this.eventStore, connectionString);
-      
+
+      this.stopAccountsListener = await ListAccounts.startAccountProjectionListener(
+        this.eventStore,
+        connectionString
+      );
+      this.stopAnalyticsListener = await Analytics.startAnalyticsListener(
+        this.eventStore,
+        connectionString
+      );
+
       console.log('🏦 Welcome to the Event-Sourced Banking System!\n');
       await this.showMainMenu();
     } catch (error) {
@@ -66,7 +72,7 @@ class BankingCLI {
     console.log();
 
     const choice = await this.askQuestion('Enter your choice (0-7, 98, 99): ');
-    
+
     switch (choice) {
       case '0':
         await this.handleListAllAccounts();
@@ -107,7 +113,7 @@ class BankingCLI {
 
   private async handleListAllAccounts() {
     console.log('\n📋 All Accounts');
-    
+
     const connectionString = process.env.DATABASE_URL;
     if (!connectionString) {
       console.log('❌ Database connection not configured');
@@ -117,12 +123,12 @@ class BankingCLI {
 
     try {
       const result = await ListAccounts.queryHandler(connectionString);
-      
+
       if (result.accounts.length === 0) {
         console.log('No accounts found.');
       } else {
         console.log(`\nFound ${result.totalCount} accounts:\n`);
-        
+
         result.accounts.forEach((account, index) => {
           console.log(`${index + 1}. Account ID: ${account.accountId}`);
           console.log(`   Customer: ${account.customerName}`);
@@ -142,16 +148,18 @@ class BankingCLI {
 
   private async handleRebuildAnalytics() {
     console.log('\n🔄 Rebuild Analytics Projections');
-    console.log('⚠️  This will clear all existing analytics data and replay account opening events.');
-    
+    console.log(
+      '⚠️  This will clear all existing analytics data and replay account opening events.'
+    );
+
     const confirm = await this.askQuestion('Are you sure you want to proceed? (y/N): ');
-    
+
     if (confirm.toLowerCase() !== 'y' && confirm.toLowerCase() !== 'yes') {
       console.log('❌ Analytics rebuild cancelled');
       await this.continueOrExit();
       return;
     }
-    
+
     const connectionString = process.env.DATABASE_URL;
     if (!connectionString) {
       console.log('❌ Database connection not configured');
@@ -165,22 +173,22 @@ class BankingCLI {
     } catch (error) {
       console.log('❌ Error rebuilding analytics:', error);
     }
-    
+
     await this.continueOrExit();
   }
 
   private async handleRebuildProjections() {
     console.log('\n🔄 Rebuild Account Projections');
     console.log('⚠️  This will clear all existing account data and replay all events.');
-    
+
     const confirm = await this.askQuestion('Are you sure you want to proceed? (y/N): ');
-    
+
     if (confirm.toLowerCase() !== 'y' && confirm.toLowerCase() !== 'yes') {
       console.log('❌ Rebuild cancelled');
       await this.continueOrExit();
       return;
     }
-    
+
     const connectionString = process.env.DATABASE_URL;
     if (!connectionString) {
       console.log('❌ Database connection not configured');
@@ -194,27 +202,30 @@ class BankingCLI {
     } catch (error) {
       console.log('❌ Error rebuilding projections:', error);
     }
-    
+
     await this.continueOrExit();
   }
 
   private async handleOpenAccount() {
     console.log('\n📝 Opening Bank Account');
-    
+
     const customerName = await this.askQuestion('Customer Name: ');
-    const accountTypeInput = await this.askQuestion('Account Type (checking/savings, default checking): ');
+    const accountTypeInput = await this.askQuestion(
+      'Account Type (checking/savings, default checking): '
+    );
     const accountType = accountTypeInput.trim() === '' ? 'checking' : accountTypeInput;
     const initialDepositInput = await this.askQuestion('Initial Deposit (optional, default 0): ');
-    const initialDeposit = initialDepositInput.trim() === '' ? undefined : parseFloat(initialDepositInput);
+    const initialDeposit =
+      initialDepositInput.trim() === '' ? undefined : parseFloat(initialDepositInput);
     const currencyInput = await this.askQuestion('Currency (USD/EUR/GBP, default USD): ');
     const currency = currencyInput.trim() === '' ? 'USD' : currencyInput;
 
     const command: OpenBankAccount.OpenBankAccountCommand = {
       customerName,
       accountType,
-      currency
+      currency,
     };
-    
+
     if (initialDeposit !== undefined) {
       command.initialDeposit = initialDeposit;
     }
@@ -227,7 +238,6 @@ class BankingCLI {
       console.log(`Customer: ${result.event.customerName}`);
       console.log(`Type: ${result.event.accountType}`);
       console.log(`Initial Balance: ${result.event.initialDeposit} ${result.event.currency}`);
-      
     } else {
       console.log('❌ Error:', result.error.message);
     }
@@ -237,31 +247,30 @@ class BankingCLI {
 
   private async handleDeposit() {
     console.log('\n💰 Deposit Money');
-    
+
     const accountId = await this.askQuestion('Account ID: ');
     const amountInput = await this.askQuestion('Amount: ');
     const amount = parseFloat(amountInput);
-    
+
     if (isNaN(amount) || amount <= 0) {
       console.log('❌ Error: Please enter a valid positive amount');
       await this.continueOrExit();
       return;
     }
-    
+
     const depositId = `deposit-${Date.now()}`;
 
     const result = await DepositMoney.execute(this.eventStore, {
       accountId,
       amount,
       currency: '', // Will use account's currency
-      depositId
+      depositId,
     });
 
     if (result.success) {
       console.log('✅ Money deposited successfully!');
       console.log(`Amount: ${result.event.amount} ${result.event.currency}`);
       console.log(`Deposit ID: ${result.event.depositId}`);
-      
     } else {
       console.log('❌ Error:', result.error.message);
     }
@@ -271,30 +280,29 @@ class BankingCLI {
 
   private async handleWithdraw() {
     console.log('\n🏧 Withdraw Money');
-    
+
     const accountId = await this.askQuestion('Account ID: ');
     const amountInput = await this.askQuestion('Amount: ');
     const amount = parseFloat(amountInput);
-    
+
     if (isNaN(amount) || amount <= 0) {
       console.log('❌ Error: Please enter a valid positive amount');
       await this.continueOrExit();
       return;
     }
-    
+
     const withdrawalId = `withdrawal-${Date.now()}`;
 
     const result = await WithdrawMoney.execute(this.eventStore, {
       accountId,
       amount,
-      withdrawalId
+      withdrawalId,
     });
 
     if (result.success) {
       console.log('✅ Money withdrawn successfully!');
       console.log(`Amount: ${result.event.amount} ${result.event.currency}`);
       console.log(`Withdrawal ID: ${result.event.withdrawalId}`);
-      
     } else {
       console.log('❌ Error:', result.error.message);
     }
@@ -304,25 +312,25 @@ class BankingCLI {
 
   private async handleTransfer() {
     console.log('\n🔄 Transfer Money');
-    
+
     const fromAccountId = await this.askQuestion('From Account ID: ');
     const toAccountId = await this.askQuestion('To Account ID: ');
     const amountInput = await this.askQuestion('Amount: ');
     const amount = parseFloat(amountInput);
-    
+
     if (isNaN(amount) || amount <= 0) {
       console.log('❌ Error: Please enter a valid positive amount');
       await this.continueOrExit();
       return;
     }
-    
+
     const transferId = `transfer-${Date.now()}`;
 
     const result = await TransferMoney.execute(this.eventStore, {
       fromAccountId,
       toAccountId,
       amount,
-      transferId
+      transferId,
     });
 
     if (result.success) {
@@ -331,7 +339,6 @@ class BankingCLI {
       console.log(`To: ${result.event.toAccountId}`);
       console.log(`Amount: ${result.event.amount} ${result.event.currency}`);
       console.log(`Transfer ID: ${result.event.transferId}`);
-      
     } else {
       console.log('❌ Error:', result.error.message);
     }
@@ -341,11 +348,11 @@ class BankingCLI {
 
   private async handleViewBalance() {
     console.log('\n📊 View Account Balance');
-    
+
     const accountId = await this.askQuestion('Account ID: ');
-    
+
     const account = await GetAccount.execute(this.eventStore, { accountId });
-    
+
     if (account) {
       console.log('✅ Account Information:');
       console.log(`Account ID: ${account.accountId}`);
@@ -362,16 +369,16 @@ class BankingCLI {
 
   private async handleViewAnalytics() {
     console.log('\n📈 Account Opening Analytics');
-    
+
     const monthsInput = await this.askQuestion('How many recent months to show? (default: 12): ');
     const months = monthsInput.trim() === '' ? 12 : parseInt(monthsInput);
-    
+
     if (isNaN(months) || months <= 0) {
       console.log('❌ Error: Please enter a valid positive number');
       await this.continueOrExit();
       return;
     }
-    
+
     const connectionString = process.env.DATABASE_URL;
     if (!connectionString) {
       console.log('❌ Database connection not configured');
@@ -381,12 +388,12 @@ class BankingCLI {
 
     try {
       const result = await Analytics.queryHandler(connectionString, { months });
-      
+
       if (result.monthlyStats.length === 0) {
         console.log('No analytics data found.');
       } else {
         console.log(`\n📊 Account Opening Statistics (Last ${months} months):\n`);
-        
+
         let totalOpenings = 0;
         result.monthlyStats.forEach((stat, index) => {
           console.log(`${index + 1}. ${stat.monthName} ${stat.year}`);
@@ -395,10 +402,12 @@ class BankingCLI {
           console.log('');
           totalOpenings += stat.accountOpenings;
         });
-        
+
         console.log(`📊 Summary:`);
         console.log(`   Total New Accounts: ${totalOpenings}`);
-        console.log(`   Average per Month: ${(totalOpenings / result.monthlyStats.length).toFixed(1)}`);
+        console.log(
+          `   Average per Month: ${(totalOpenings / result.monthlyStats.length).toFixed(1)}`
+        );
       }
     } catch (error) {
       console.log('❌ Error retrieving analytics:', error);
@@ -410,7 +419,7 @@ class BankingCLI {
   private async continueOrExit() {
     console.log();
     const choice = await this.askQuestion('Continue? (Y/n): ');
-    
+
     if (choice === '' || choice.toLowerCase() === 'y' || choice.toLowerCase() === 'yes') {
       console.log();
       await this.showMainMenu();
@@ -431,7 +440,6 @@ class BankingCLI {
     await this.eventStore.close();
     rl.close();
   }
-
 
   private askQuestion(question: string): Promise<string> {
     return new Promise((resolve) => {

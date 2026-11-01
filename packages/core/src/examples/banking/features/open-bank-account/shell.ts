@@ -10,12 +10,12 @@ export async function execute(
   command: OpenBankAccountCommand
 ): Promise<OpenAccountResult> {
   const accountId = uuidv4();
-  
+
   const filter = createQuery(createFilter(['BankAccountOpened']));
   const queryResult = await eventStore.query(filter);
   const state = foldOpenAccountState(queryResult.events);
   const result = decideOpenAccount(command, accountId, state);
-  
+
   if (!result.success) {
     return result;
   }
@@ -29,16 +29,14 @@ export async function execute(
       result.event.currency,
       result.event.openedAt
     );
-    
+
     await eventStore.append([event], filter, queryResult.maxSequenceNumber);
-    
+
     return result;
   } catch (error) {
     return {
       success: false,
-      error: { type: 'InvalidCustomerName', message: 'Failed to save account opening event' }
+      error: { type: 'InvalidCustomerName', message: 'Failed to save account opening event' },
     };
   }
 }
-
-
