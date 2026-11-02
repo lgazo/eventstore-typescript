@@ -205,7 +205,9 @@ describe('MemoryEventStore', () => {
     it('store and load', async () => {
       try {
         fs.unlinkSync('test.json');
-      } catch (err) {}
+      } catch (err) {
+        // ignore: file may not exist yet
+      }
 
       await sut.append([
         { eventType: 'e1', payload: { m: 'hello' } },
@@ -228,7 +230,9 @@ describe('MemoryEventStore', () => {
       const filename = 'missing.json';
       try {
         fs.unlinkSync(filename);
-      } catch (err) {}
+      } catch (err) {
+        // ignore: file may not exist yet
+      }
 
       const loaded = await MemoryEventStore.createFromFile(filename, true);
       expect((await loaded.queryAll()).events.length).toBe(0);
@@ -238,7 +242,9 @@ describe('MemoryEventStore', () => {
       const filename = 'write-thru.json';
       try {
         fs.unlinkSync(filename);
-      } catch (err) {}
+      } catch (err) {
+        // ignore: file may not exist yet
+      }
 
       const store = await MemoryEventStore.createFromFile(filename, true, true);
       await store.append([{ eventType: 'e1', payload: { m: 'hello' } }]);

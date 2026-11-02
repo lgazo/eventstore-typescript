@@ -4,7 +4,8 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-const baseUrl = process.env.DATABASE_TEST_URL || 'postgres://postgres:postgres@localhost:5432/eventstore_test';
+const baseUrl =
+  process.env.DATABASE_TEST_URL || 'postgres://postgres:postgres@localhost:5432/eventstore_test';
 const scenarioTable = 'events_tenancy_scenario';
 
 class TestEvent implements Event {
@@ -63,7 +64,11 @@ describe('Postgres tenancy scenarios', () => {
 
       const staleMax = freshMax - 1;
       await expect(
-        store.append([new TestEvent('SharedEvent', 's3', {})], createFilter(['SharedEvent']), staleMax)
+        store.append(
+          [new TestEvent('SharedEvent', 's3', {})],
+          createFilter(['SharedEvent']),
+          staleMax
+        )
       ).rejects.toThrow('eventstore-stores-postgres-err05');
     });
 
@@ -145,7 +150,10 @@ describe('Postgres tenancy scenarios', () => {
     });
 
     it('writes NULL tenant rows from a shared store that a tenant store cannot see', async () => {
-      const shared = new PostgresEventStore({ connectionString: baseUrl, tableName: scenarioTable });
+      const shared = new PostgresEventStore({
+        connectionString: baseUrl,
+        tableName: scenarioTable,
+      });
       try {
         await shared.append([new TestEvent('SharedEvent', 'sh1', {})]);
 

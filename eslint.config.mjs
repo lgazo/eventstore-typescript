@@ -46,6 +46,19 @@ export default [
     },
   },
   {
-    ignores: ['node_modules/**', 'dist/**', '**/*.test.ts', '**/*.spec.ts', '**/examples/**'],
+    // Test files are excluded from the package tsconfig projects (they must
+    // never end up in build output), so the type-aware rules from the block
+    // above cannot run there. Keep the base (type-unaware) rules active and
+    // disable exactly the rules that need type information.
+    files: ['**/*.test.ts', '**/*.spec.ts', '**/__tests__/**/*.ts', 'tests/**/*.ts'],
+    rules: Object.fromEntries(
+      Object.keys(tsPlugin.configs['recommended-requiring-type-checking'].rules).map((name) => [
+        name,
+        'off',
+      ])
+    ),
+  },
+  {
+    ignores: ['node_modules/**', 'dist/**', '**/examples/**'],
   },
 ];

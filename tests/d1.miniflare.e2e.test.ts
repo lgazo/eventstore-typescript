@@ -33,7 +33,10 @@ describe('D1 store against real workerd D1 (miniflare)', () => {
 
   test('initializeDatabase creates the schema on a real D1 binding', async () => {
     await fresh();
-    const info = await db.prepare('SELECT name FROM sqlite_master WHERE name = ?').bind('events').run();
+    const info = await db
+      .prepare('SELECT name FROM sqlite_master WHERE name = ?')
+      .bind('events')
+      .run();
     expect((info.results as Array<{ name: string }>).map((r) => r.name)).toContain('events');
   });
 
@@ -107,6 +110,8 @@ describe('D1 store against real workerd D1 (miniflare)', () => {
     const { events } = await store.query(f);
     const iso = events[0]!.timestamp.toISOString();
     expect(iso).toMatch(/\.\d{3}Z$/);
-    expect(events[0]!.timestamp.getTime()).toBeGreaterThan(new Date('2026-01-01T00:00:00Z').getTime());
+    expect(events[0]!.timestamp.getTime()).toBeGreaterThan(
+      new Date('2026-01-01T00:00:00Z').getTime()
+    );
   });
 });

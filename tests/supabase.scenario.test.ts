@@ -22,12 +22,18 @@ const tenantBPassword = process.env.SUPABASE_TEST_TENANT_B_PASSWORD;
 
 const hasRequiredConfig = Boolean(supabaseUrl && supabaseKey);
 const describeIfConfigured = hasRequiredConfig ? describe : describe.skip;
-const itIfIsolationConfigured = (
-  tenantAEmail && tenantAPassword && tenantBEmail && tenantBPassword
-) ? it : it.skip;
+const itIfIsolationConfigured =
+  tenantAEmail && tenantAPassword && tenantBEmail && tenantBPassword ? it : it.skip;
 
 async function signInAndResolveTenant(
-  client: { auth: { signInWithPassword(args: { email: string; password: string }): Promise<{ data: { user: { id: string } | null }; error: unknown }> } },
+  client: {
+    auth: {
+      signInWithPassword(args: {
+        email: string;
+        password: string;
+      }): Promise<{ data: { user: { id: string } | null }; error: unknown }>;
+    };
+  },
   email: string,
   password: string
 ): Promise<string> {
@@ -139,19 +145,12 @@ describeIfConfigured('Supabase scenario (real database)', () => {
     });
 
     const runId = uuidv4();
-    const isolationFilter = createFilter(
-      ['TenantIsolationEvent'],
-      [{ runId }]
-    );
+    const isolationFilter = createFilter(['TenantIsolationEvent'], [{ runId }]);
     const isolationQuery = createQuery(isolationFilter);
 
-    await storeA.append([
-      { eventType: 'TenantIsolationEvent', payload: { runId, owner: 'A' } },
-    ]);
+    await storeA.append([{ eventType: 'TenantIsolationEvent', payload: { runId, owner: 'A' } }]);
 
-    await storeB.append([
-      { eventType: 'TenantIsolationEvent', payload: { runId, owner: 'B' } },
-    ]);
+    await storeB.append([{ eventType: 'TenantIsolationEvent', payload: { runId, owner: 'B' } }]);
 
     const resultA = await storeA.query(isolationQuery);
     const resultB = await storeB.query(isolationQuery);
