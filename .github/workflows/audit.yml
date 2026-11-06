@@ -1,0 +1,52 @@
+name: Dependency audit
+
+on:
+  schedule:
+    - cron: '30 4 * * 1' # Mondays 04:30 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  audit:
+    name: Audit and fix dependencies
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Audit (report)
+        id: audit
+        run: |
+          npm audit --audit-level=high | tee audit-report.txt || true
+
+      - name: Audit fix
+        run: npm audit fix
+
+      - name: Build
+        run: npm run build
+
+      - name: Commit changes and open update PR
+        uses: peter-evans/create-pull-request@v7
+        with:
+          commit-message: 'chore(deps): apply npm audit fix'
+          branch: deps/audit-fix
+          delete-branch: true
+          title: 'chore(deps): apply npm audit fix'
+          body-path: audit-report.txt
+          add-paths: |
+            package.json
+            package-lock.json
+            packages/*/package.json

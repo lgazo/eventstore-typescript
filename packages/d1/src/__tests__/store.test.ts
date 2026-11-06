@@ -1,4 +1,4 @@
-import { createFilter, createQuery } from '@ricofritzsche/eventstore';
+import { createFilter, createQuery } from '@lgazo/eventstore';
 import { D1EventStore } from '../store';
 import { nodeSqliteD1 } from '../test-support/node-sqlite-d1';
 
@@ -27,7 +27,9 @@ test('query filters payload predicates in SQL, per stream', async () => {
   const fb = createFilter(['DraftOpened'], [{ proposalId: 'prp_b' }]);
   await store.append([ev('DraftOpened', { proposalId: 'prp_a' })], fa, 0);
   await store.append([ev('DraftOpened', { proposalId: 'prp_b' })], fb, 0);
-  expect((await store.query(createQuery(fa))).events.map((e) => e.payload.proposalId)).toEqual(['prp_a']);
+  expect((await store.query(createQuery(fa))).events.map((e) => e.payload.proposalId)).toEqual([
+    'prp_a',
+  ]);
   expect((await store.query(createQuery(fb))).maxSequenceNumber).toBe(2);
 });
 
@@ -35,7 +37,9 @@ test('stale expected sequence is rejected and nothing is written', async () => {
   const { store } = await fresh();
   const f = createFilter(['DraftOpened', 'DraftItemsUpserted'], [{ proposalId: 'prp_a' }]);
   await store.append([ev('DraftOpened', { proposalId: 'prp_a' })], f, 0);
-  await expect(store.append([ev('DraftItemsUpserted', { proposalId: 'prp_a', n: 1 })], f, 0)).rejects.toThrow(/err03/);
+  await expect(
+    store.append([ev('DraftItemsUpserted', { proposalId: 'prp_a', n: 1 })], f, 0)
+  ).rejects.toThrow(/err03/);
   expect((await store.query(createQuery(f))).events).toHaveLength(1);
 });
 
@@ -62,13 +66,19 @@ test('numeric predicates compare as numbers', async () => {
   const { store } = await fresh();
   const f = createFilter(['X'], [{ orgId: 12 }]);
   await store.append([ev('X', { orgId: 12 })], f, 0);
-  expect((await store.query(createQuery(createFilter(['X'], [{ orgId: 12 }])))).events).toHaveLength(1);
-  expect((await store.query(createQuery(createFilter(['X'], [{ orgId: 13 }])))).events).toHaveLength(0);
+  expect(
+    (await store.query(createQuery(createFilter(['X'], [{ orgId: 12 }])))).events
+  ).toHaveLength(1);
+  expect(
+    (await store.query(createQuery(createFilter(['X'], [{ orgId: 13 }])))).events
+  ).toHaveLength(0);
 });
 
 test('nested object predicates are refused', async () => {
   const { store } = await fresh();
-  await expect(store.query(createQuery(createFilter(['X'], [{ a: { b: 1 } }])))).rejects.toThrow(/err06/);
+  await expect(store.query(createQuery(createFilter(['X'], [{ a: { b: 1 } }])))).rejects.toThrow(
+    /err06/
+  );
 });
 
 import { buildContextQuerySql, buildTenantScopeSql } from '../sql';

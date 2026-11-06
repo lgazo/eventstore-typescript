@@ -1,9 +1,8 @@
-import { EventStore, EventFilter, Event, createFilter, createQuery } from '../src/eventstore';
-import { PostgresEventStore } from '@ricofritzsche/eventstore-postgres';
+import { EventStore, EventFilter, Event, createFilter, createQuery } from '@lgazo/eventstore';
+import { PostgresEventStore } from '@lgazo/eventstore-postgres';
 import dotenv from 'dotenv';
 
 dotenv.config();
-
 
 class TestEvent implements Event {
   public readonly eventType: string;
@@ -15,22 +14,20 @@ class TestEvent implements Event {
   }
 }
 
-
 describe('Optimistic Locking CTE Condition', () => {
   let eventStore: PostgresEventStore;
 
   beforeEach(async () => {
-    const connectionString = process.env.DATABASE_TEST_URL || 'postgres://postgres:postgres@localhost:5432/eventstore_test';
-    eventStore = new PostgresEventStore(
-      { connectionString: connectionString }
-    );
+    const connectionString =
+      process.env.DATABASE_TEST_URL ||
+      'postgres://postgres:postgres@localhost:5432/eventstore_test';
+    eventStore = new PostgresEventStore({ connectionString: connectionString });
     await eventStore.initializeDatabase();
   });
 
   afterEach(async () => {
     await eventStore.close();
   });
-
 
   it('should succeed when sequence number matches expected', async () => {
     // Create a temporary event type name
@@ -44,7 +41,9 @@ describe('Optimistic Locking CTE Condition', () => {
 
     // Append one event with that temp type name
     const event1 = new TestEvent(eventType, 'test-1', { value: 'first' });
-    await expect(eventStore.append([event1], filter, initialResult.maxSequenceNumber)).resolves.not.toThrow();
+    await expect(
+      eventStore.append([event1], filter, initialResult.maxSequenceNumber)
+    ).resolves.not.toThrow();
 
     // Retrieve this one event, the only one with this temp type name
     const afterInsert = await eventStore.query(filter);
@@ -52,7 +51,6 @@ describe('Optimistic Locking CTE Condition', () => {
     expect(afterInsert.maxSequenceNumber).toBeGreaterThan(0);
     expect((afterInsert.events[0]?.payload as any).id).toBe('test-1');
   });
-
 
   it('should fail when sequence number does not match (CTE condition)', async () => {
     // Create tempoary event type name
@@ -80,7 +78,6 @@ describe('Optimistic Locking CTE Condition', () => {
     expect(afterFailedInsert.maxSequenceNumber).toBe(currentSequence);
   });
 
-
   it('should handle concurrent modifications correctly', async () => {
     // Create a temporary event type name
     const eventType = `TestEvent_${Date.now()}_3`;
@@ -90,7 +87,7 @@ describe('Optimistic Locking CTE Condition', () => {
     // 1. Two processes query at the same time
     const [result1, result2] = await Promise.all([
       eventStore.query(filter),
-      eventStore.query(filter)
+      eventStore.query(filter),
     ]);
 
     expect(result1.maxSequenceNumber).toBe(0);
@@ -102,9 +99,9 @@ describe('Optimistic Locking CTE Condition', () => {
 
     // 3. Second process tries to append its context sequence number (which is now outdated due to first process)
     const event2 = new TestEvent(eventType, 'concurrent-3.b.1', { process: 'B' });
-    await expect(
-      eventStore.append([event2], filter, result2.maxSequenceNumber)
-    ).rejects.toThrow('eventstore-stores-postgres-err05');
+    await expect(eventStore.append([event2], filter, result2.maxSequenceNumber)).rejects.toThrow(
+      'eventstore-stores-postgres-err05'
+    );
 
     // Verify only the first event was inserted
     const finalResult = await eventStore.query(filter);
@@ -112,7 +109,6 @@ describe('Optimistic Locking CTE Condition', () => {
     expect((finalResult.events[0]?.payload as any).id).toBe('concurrent-3.a.1');
     expect(finalResult.maxSequenceNumber).toBeGreaterThan(0);
   });
-
 
   it('should work with payload predicates in CTE condition', async () => {
     const eventType = `TestEvent_${Date.now()}_4`;
@@ -127,8 +123,8 @@ describe('Optimistic Locking CTE Condition', () => {
       payload: {
         id: 'test-4.1',
         accountId: 'other-account', // Top level property
-        value: 'first'
-      }
+        value: 'first',
+      },
     };
     await eventStore.append([otherEvent], otherFilter, 0);
 
@@ -143,8 +139,8 @@ describe('Optimistic Locking CTE Condition', () => {
       payload: {
         id: 'test-4.2',
         accountId, // Top level property for payload predicate matching
-        value: 'second'
-      }
+        value: 'second',
+      },
     };
     await expect(eventStore.append([event], filter, 0)).resolves.not.toThrow();
 
@@ -155,36 +151,38 @@ describe('Optimistic Locking CTE Condition', () => {
     expect(afterInsert.maxSequenceNumber).toBeGreaterThan(0);
   });
 
-
   it('should query only events after minSequenceNumber', async () => {
     const eventType = `TestEvent_${Date.now()}_minseq1`;
     const filter = createFilter([eventType]);
 
-    await eventStore.append([
-      new TestEvent(eventType, 'e1', {}),
-      new TestEvent(eventType, 'e2', {}),
-      new TestEvent(eventType, 'e3', {}),
-    ], filter, 0);
+    await eventStore.append(
+      [
+        new TestEvent(eventType, 'e1', {}),
+        new TestEvent(eventType, 'e2', {}),
+        new TestEvent(eventType, 'e3', {}),
+      ],
+      filter,
+      0
+    );
 
     const all = await eventStore.query(filter);
     expect(all.events).toHaveLength(3);
     const seqOfFirst = all.events[0]!.sequenceNumber;
 
-    const partial = await eventStore.query(createQuery({ minSequenceNumber: seqOfFirst }, createFilter([eventType])));
+    const partial = await eventStore.query(
+      createQuery({ minSequenceNumber: seqOfFirst }, createFilter([eventType]))
+    );
     expect(partial.events).toHaveLength(2);
     expect((partial.events[0]!.payload as any).id).toBe('e2');
     expect((partial.events[1]!.payload as any).id).toBe('e3');
     expect(partial.maxSequenceNumber).toBe(all.events[2]!.sequenceNumber);
   });
 
-
   it('minSequenceNumber does not affect optimistic locking context', async () => {
     const eventType = `TestEvent_${Date.now()}_minseq2`;
     const filter = createFilter([eventType]);
 
-    await eventStore.append([
-      new TestEvent(eventType, 'e1', {}),
-    ], filter, 0);
+    await eventStore.append([new TestEvent(eventType, 'e1', {})], filter, 0);
 
     const fullContext = await eventStore.query(createQuery(createFilter([eventType])));
     const seqOfFirst = fullContext.events[0]!.sequenceNumber;
@@ -199,22 +197,28 @@ describe('Optimistic Locking CTE Condition', () => {
 
     // Appending with the partial maxSequenceNumber fails — full context already has 1 event
     await expect(
-      eventStore.append([new TestEvent(eventType, 'e2', {})], createQuery(createFilter([eventType])), partial.maxSequenceNumber)
+      eventStore.append(
+        [new TestEvent(eventType, 'e2', {})],
+        createQuery(createFilter([eventType])),
+        partial.maxSequenceNumber
+      )
     ).rejects.toThrow('eventstore-stores-postgres-err05');
 
     // Appending with the correct full-context sequence succeeds
     await expect(
-      eventStore.append([new TestEvent(eventType, 'e2', {})], createQuery(createFilter([eventType])), fullContext.maxSequenceNumber)
+      eventStore.append(
+        [new TestEvent(eventType, 'e2', {})],
+        createQuery(createFilter([eventType])),
+        fullContext.maxSequenceNumber
+      )
     ).resolves.not.toThrow();
   });
 
-
   it('should work with multiple payload predicate options (OR conditions)', async () => {
     const eventType = `TestEvent_${Date.now()}_5`;
-    const filter = createQuery(createFilter([eventType], [
-      { accountId: 'account-1' },
-      { accountId: 'account-2' }
-    ]));
+    const filter = createQuery(
+      createFilter([eventType], [{ accountId: 'account-1' }, { accountId: 'account-2' }])
+    );
 
     // Insert event for account-1
     const event1: Event = {
@@ -222,8 +226,8 @@ describe('Optimistic Locking CTE Condition', () => {
       payload: {
         id: 'test-5.1',
         accountId: 'account-1', // Top level property
-        value: 'first'
-      }
+        value: 'first',
+      },
     };
     await eventStore.append([event1], filter, 0);
 
@@ -239,8 +243,8 @@ describe('Optimistic Locking CTE Condition', () => {
       payload: {
         id: 'test-5.2',
         accountId: 'account-2', // Top level property
-        value: 'second'
-      }
+        value: 'second',
+      },
     };
     //await expect(eventStore.append(filter, [event2], currentSequence)).resolves.not.toThrow();
     await eventStore.append([event2], filter, currentSequence);
@@ -256,12 +260,11 @@ describe('Optimistic Locking CTE Condition', () => {
       payload: {
         id: 'test-5.3',
         accountId: 'account-1', // Top level property
-        value: 'third'
-      }
+        value: 'third',
+      },
     };
     await expect(
       eventStore.append([event3], filter, currentSequence) // Outdated, should be currentSequence + 1
     ).rejects.toThrow('eventstore-stores-postgres-err05');
   });
-
 });

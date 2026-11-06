@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 
 import dotenv from 'dotenv';
-import { createFilter } from './src/eventstore';
-import { PostgresEventStore } from '@ricofritzsche/eventstore-postgres';
+import { createFilter } from './packages/core/src/eventstore';
+import { PostgresEventStore } from '@lgazo/eventstore-postgres';
 
 // Load environment variables
 dotenv.config();

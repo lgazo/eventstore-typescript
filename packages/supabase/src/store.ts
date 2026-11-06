@@ -2,16 +2,16 @@ import {
   Event,
   EventFilter,
   EventQuery,
-  EventRecord,
   EventStore,
   EventStreamNotifier,
   EventSubscription,
   HandleEvents,
   QueryResult,
-} from '@ricofritzsche/eventstore';
-import { createFilter, createQuery } from '@ricofritzsche/eventstore';
-import { MemoryEventStreamNotifier } from '@ricofritzsche/eventstore';
-import { processQuery } from '@ricofritzsche/eventstore';
+} from '@lgazo/eventstore';
+import { createFilter, createQuery } from '@lgazo/eventstore';
+import { MemoryEventStreamNotifier } from '@lgazo/eventstore';
+import { processQuery } from '@lgazo/eventstore';
+import { createClient } from '@supabase/supabase-js';
 import { deserializeEvent } from './transform';
 
 const NON_EXISTENT_EVENT_TYPE = '__NON_EXISTENT__' + Math.random().toString(36);
@@ -74,7 +74,9 @@ export interface ParsedSupabaseConnectionString {
   tenantId?: string;
 }
 
-export function parseSupabaseConnectionString(connectionString: string): ParsedSupabaseConnectionString {
+export function parseSupabaseConnectionString(
+  connectionString: string
+): ParsedSupabaseConnectionString {
   const url = new URL(connectionString);
   const tableName = url.searchParams.get('table') ?? undefined;
   const supabaseAnonKey = url.searchParams.get('anonKey') ?? undefined;
@@ -130,18 +132,13 @@ export class SupabaseEventStore implements EventStore {
       throw new Error('eventstore-stores-supabase-err03: Supabase URL and anon key are required');
     }
 
-    const supabaseJs = require('@supabase/supabase-js') as {
-      createClient(url: string, key: string): SupabaseClientLike;
-    };
-    this.client = supabaseJs.createClient(supabaseUrl, supabaseAnonKey);
+    this.client = createClient(supabaseUrl, supabaseAnonKey);
   }
 
   async query(filterCriteria: EventQuery): Promise<QueryResult>;
   async query(filterCriteria: EventFilter): Promise<QueryResult>;
   async query(filterCriteria: EventQuery | EventFilter): Promise<QueryResult> {
-    const eventQuery = 'filters' in filterCriteria
-      ? filterCriteria as EventQuery
-      : createQuery(filterCriteria as EventFilter);
+    const eventQuery = 'filters' in filterCriteria ? filterCriteria : createQuery(filterCriteria);
 
     const response = await this.client
       .from<Record<string, unknown>>(this.tableName)
@@ -155,9 +152,10 @@ export class SupabaseEventStore implements EventStore {
     const scopedRows = (response.data ?? []).filter((row) => this.matchesTenantScope(row));
     const allEvents = scopedRows.map((row) => deserializeEvent(row));
     const matchingEvents = processQuery(allEvents, eventQuery);
-    const maxSequenceNumber = matchingEvents.length > 0
-      ? matchingEvents[matchingEvents.length - 1]?.sequenceNumber ?? 0
-      : 0;
+    const maxSequenceNumber =
+      matchingEvents.length > 0
+        ? (matchingEvents[matchingEvents.length - 1]?.sequenceNumber ?? 0)
+        : 0;
 
     return {
       events: matchingEvents,
@@ -166,8 +164,16 @@ export class SupabaseEventStore implements EventStore {
   }
 
   async append(events: Event[]): Promise<void>;
-  async append(events: Event[], filterCriteria: EventQuery, expectedMaxSequenceNumber: number): Promise<void>;
-  async append(events: Event[], filterCriteria: EventFilter, expectedMaxSequenceNumber: number): Promise<void>;
+  async append(
+    events: Event[],
+    filterCriteria: EventQuery,
+    expectedMaxSequenceNumber: number
+  ): Promise<void>;
+  async append(
+    events: Event[],
+    filterCriteria: EventFilter,
+    expectedMaxSequenceNumber: number
+  ): Promise<void>;
   async append(
     events: Event[],
     filterCriteria?: EventQuery | EventFilter,
@@ -190,21 +196,20 @@ export class SupabaseEventStore implements EventStore {
     }
 
     if (expectedMaxSequenceNumber === undefined) {
-      throw new Error('eventstore-stores-supabase-err05: Expected max sequence number is required when a filter is provided');
+      throw new Error(
+        'eventstore-stores-supabase-err05: Expected max sequence number is required when a filter is provided'
+      );
     }
 
-    const response = await this.client.rpc<Record<string, unknown>[]>(
-      this.appendFunctionName,
-      {
-        p_schema_name: this.schemaName,
-        p_table_name: this.tableName,
-        p_query: eventQuery,
-        p_expected_max_seq: expectedMaxSequenceNumber,
-        p_tenant_id: this.tenantId ?? null,
-        p_event_types: events.map((event) => event.eventType),
-        p_payloads: events.map((event) => event.payload),
-      }
-    );
+    const response = await this.client.rpc<Record<string, unknown>[]>(this.appendFunctionName, {
+      p_schema_name: this.schemaName,
+      p_table_name: this.tableName,
+      p_query: eventQuery,
+      p_expected_max_seq: expectedMaxSequenceNumber,
+      p_tenant_id: this.tenantId ?? null,
+      p_event_types: events.map((event) => event.eventType),
+      p_payloads: events.map((event) => event.payload),
+    });
 
     if (response.error) {
       throw new Error(`eventstore-stores-supabase-err06: Append failed: ${response.error.message}`);
@@ -212,7 +217,9 @@ export class SupabaseEventStore implements EventStore {
 
     const insertedRows = (response.data ?? []).filter((row) => this.matchesTenantScope(row));
     if (insertedRows.length === 0) {
-      throw new Error('eventstore-stores-supabase-err13: Context changed: events were modified between query() and append()');
+      throw new Error(
+        'eventstore-stores-supabase-err13: Context changed: events were modified between query() and append()'
+      );
     }
 
     if (!this.useRealtime) {
@@ -227,27 +234,28 @@ export class SupabaseEventStore implements EventStore {
     }
 
     const id = `supabase-sub-${++this.subscriptionCounter}`;
-    const channel = this.client
-      .channel(`eventstore-${this.tableName}-${id}`)
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: this.schemaName,
-          table: this.tableName,
-        },
-        async (payload) => {
-          try {
-            if (!this.matchesTenantScope(payload.new)) {
-              return;
-            }
-            const event = deserializeEvent(payload.new);
-            await handle([event]);
-          } catch (error) {
-            console.error(`eventstore-stores-supabase-err14: Failed to process realtime event for subscription ${id}:`, error);
+    const channel = this.client.channel(`eventstore-${this.tableName}-${id}`).on(
+      'postgres_changes',
+      {
+        event: 'INSERT',
+        schema: this.schemaName,
+        table: this.tableName,
+      },
+      async (payload) => {
+        try {
+          if (!this.matchesTenantScope(payload.new)) {
+            return;
           }
+          const event = deserializeEvent(payload.new);
+          await handle([event]);
+        } catch (error) {
+          console.error(
+            `eventstore-stores-supabase-err14: Failed to process realtime event for subscription ${id}:`,
+            error
+          );
         }
-      );
+      }
+    );
 
     channel.subscribe();
     this.subscriptions.set(id, channel);

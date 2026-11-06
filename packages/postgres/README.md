@@ -1,18 +1,18 @@
-# @ricofritzsche/eventstore-postgres
+# @lgazo/eventstore-postgres
 
-PostgreSQL implementation for [`@ricofritzsche/eventstore`](https://www.npmjs.com/package/@ricofritzsche/eventstore).
+PostgreSQL implementation for [`@lgazo/eventstore`](https://www.npmjs.com/package/@lgazo/eventstore).
 
 ## Installation
 
 ```bash
-npm install @ricofritzsche/eventstore @ricofritzsche/eventstore-postgres
+npm install @lgazo/eventstore @lgazo/eventstore-postgres
 ```
 
 ## Usage
 
 ```ts
-import { createFilter } from '@ricofritzsche/eventstore';
-import { PostgresEventStore } from '@ricofritzsche/eventstore-postgres';
+import { createFilter } from '@lgazo/eventstore';
+import { PostgresEventStore } from '@lgazo/eventstore-postgres';
 
 const eventStore = new PostgresEventStore({
   connectionString: process.env.DATABASE_URL,
@@ -92,7 +92,7 @@ CREATE INDEX IF NOT EXISTS idx_events_tenant_seq ON events(tenant_id, sequence_n
 
 Legacy rows have `tenant_id IS NULL`, so a store without `tenantId` keeps seeing exactly the rows it saw before.
 
-> Workspace note: when working inside this repository, build `@ricofritzsche/eventstore` first (`npm run build:core`) so that its type declarations are available for this package's compiler.
+> Workspace note: when working inside this repository, build `@lgazo/eventstore` first (`npm run build:core`) so that its type declarations are available for this package's compiler.
 
 ## License
 

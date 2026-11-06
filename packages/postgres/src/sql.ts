@@ -1,20 +1,24 @@
-import { EventFilter, EventQuery } from '@ricofritzsche/eventstore';
+import { EventFilter, EventQuery } from '@lgazo/eventstore';
 import { quoteIdentifier } from './schema';
 
-
-export function compileContextQueryConditions(query: EventQuery, paramsBaseIndex: number = 0): { sql: string; params: unknown[] } {
+export function compileContextQueryConditions(
+  query: EventQuery,
+  paramsBaseIndex: number = 0
+): { sql: string; params: unknown[] } {
   let sql = '';
   const params: unknown[] = [];
 
   if (query.filters && query.filters.length > 0) {
-    for(const filter of query.filters) {
+    for (const filter of query.filters) {
       if (sql.length > 0) {
         sql += ' OR ';
       }
 
-      const filterClause = compileContextQueryConditionsFilter(filter, paramsBaseIndex + params.length);
-      if (filterClause.sql.length > 0)
-        sql += `(${filterClause.sql})`;
+      const filterClause = compileContextQueryConditionsFilter(
+        filter,
+        paramsBaseIndex + params.length
+      );
+      if (filterClause.sql.length > 0) sql += `(${filterClause.sql})`;
 
       params.push(...filterClause.params);
     }
@@ -23,8 +27,11 @@ export function compileContextQueryConditions(query: EventQuery, paramsBaseIndex
   return { sql, params };
 }
 
-function compileContextQueryConditionsFilter(filter: EventFilter, paramsBaseIndex:number): { sql: string; params: unknown[] } {
-  let sql = ''
+function compileContextQueryConditionsFilter(
+  filter: EventFilter,
+  paramsBaseIndex: number
+): { sql: string; params: unknown[] } {
+  let sql = '';
   const params: unknown[] = [];
 
   if (filter.eventTypes && filter.eventTypes.length > 0) {
@@ -41,16 +48,19 @@ function compileContextQueryConditionsFilter(filter: EventFilter, paramsBaseInde
     if (sql.length > 0) sql += ' AND ';
     sql += `(${orConditions.join(' OR ')})`;
   }
-  if (sql.length > 0) sql = `(${sql})`
+  if (sql.length > 0) sql = `(${sql})`;
 
   return {
     sql,
-    params
+    params,
   };
 }
 
-
-export function buildContextQuerySql(query: EventQuery, tableName: string = 'events', tenantId?: string): { sql: string; params: unknown[] } {
+export function buildContextQuerySql(
+  query: EventQuery,
+  tableName: string = 'events',
+  tenantId?: string
+): { sql: string; params: unknown[] } {
   const params: unknown[] = [];
   const clauses: string[] = [];
 
@@ -80,8 +90,12 @@ export function buildContextQuerySql(query: EventQuery, tableName: string = 'eve
   return { sql, params };
 }
 
-
-export function buildAppendSql(query: EventQuery, expectedMaxSeq: number, tableName: string = 'events', tenantId?: string): { sql: string, params: unknown[] } {
+export function buildAppendSql(
+  query: EventQuery,
+  expectedMaxSeq: number,
+  tableName: string = 'events',
+  tenantId?: string
+): { sql: string; params: unknown[] } {
   const tenantParams: unknown[] = tenantId !== undefined ? [tenantId] : [];
   const conditions = compileContextQueryConditions(query, tenantParams.length);
 
@@ -95,18 +109,16 @@ export function buildAppendSql(query: EventQuery, expectedMaxSeq: number, tableN
   const eventTypesParam = contextParams.length + 2;
   const payloadsParam = contextParams.length + 3;
 
-  const insertColumns = tenantId !== undefined
-    ? 'event_type, payload, tenant_id'
-    : 'event_type, payload';
+  const insertColumns =
+    tenantId !== undefined ? 'event_type, payload, tenant_id' : 'event_type, payload';
   const tenantSelect = tenantId !== undefined ? ', $1' : '';
   const contextWhereSql = contextWhere.length > 0 ? ' WHERE ' + contextWhere : '';
 
   return {
-    sql:
-`WITH context AS (SELECT MAX(sequence_number) AS max_seq FROM ${quoteIdentifier(tableName)}${contextWhereSql})
+    sql: `WITH context AS (SELECT MAX(sequence_number) AS max_seq FROM ${quoteIdentifier(tableName)}${contextWhereSql})
 INSERT INTO ${quoteIdentifier(tableName)} (${insertColumns})
 SELECT unnest($${eventTypesParam}::text[]), unnest($${payloadsParam}::jsonb[])${tenantSelect} FROM context WHERE COALESCE(max_seq, 0) = $${expectedMaxSeqParam}
 RETURNING *`,
-    params: [...contextParams, expectedMaxSeq]
+    params: [...contextParams, expectedMaxSeq],
   };
 }

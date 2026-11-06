@@ -1,12 +1,11 @@
 import { QueryResult } from 'pg';
-import { 
-  deserializeEvent, 
-  mapRecordsToEvents, 
-  extractMaxSequenceNumber, 
-  prepareInsertParams 
+import {
+  deserializeEvent,
+  mapRecordsToEvents,
+  extractMaxSequenceNumber,
+  prepareInsertParams,
 } from '../transform';
-import { Event } from '@ricofritzsche/eventstore';
-
+import { Event } from '@lgazo/eventstore';
 
 describe('Transform Functions', () => {
   describe('deserializeEvent', () => {
@@ -16,7 +15,7 @@ describe('Transform Functions', () => {
         event_version: '1.0',
         sequence_number: '123',
         occurred_at: '2023-01-01T00:00:00Z',
-        payload: JSON.stringify({ data: 'test', userId: '456' })
+        payload: JSON.stringify({ data: 'test', userId: '456' }),
       };
 
       const result = deserializeEvent(row);
@@ -33,7 +32,7 @@ describe('Transform Functions', () => {
         event_type: 'UserCreated',
         sequence_number: '123',
         occurred_at: '2023-01-01T00:00:00Z',
-        payload: { data: 'test', userId: '456' }
+        payload: { data: 'test', userId: '456' },
       };
 
       const result = deserializeEvent(row);
@@ -50,7 +49,7 @@ describe('Transform Functions', () => {
         event_type: 'UserCreated',
         sequence_number: '9007199254740992',
         occurred_at: '2023-01-01T00:00:00Z',
-        payload: { data: 'test', userId: '456' }
+        payload: { data: 'test', userId: '456' },
       };
 
       expect(() => deserializeEvent(row)).toThrow('eventstore-stores-postgres-err09');
@@ -61,7 +60,7 @@ describe('Transform Functions', () => {
         event_type: 'UserCreated',
         sequence_number: '123',
         occurred_at: 'not-a-date',
-        payload: { data: 'test', userId: '456' }
+        payload: { data: 'test', userId: '456' },
       };
 
       expect(() => deserializeEvent(row)).toThrow('eventstore-stores-postgres-err10');
@@ -76,19 +75,19 @@ describe('Transform Functions', () => {
             event_type: 'UserCreated',
             sequence_number: '1',
             occurred_at: '2023-01-01T00:00:00Z',
-            payload: { data: 'first' }
+            payload: { data: 'first' },
           },
           {
             event_type: 'UserUpdated',
             sequence_number: '2',
             occurred_at: '2023-01-01T01:00:00Z',
-            payload: { data: 'second' }
-          }
+            payload: { data: 'second' },
+          },
         ],
         command: 'SELECT',
         rowCount: 2,
         oid: 0,
-        fields: []
+        fields: [],
       } as QueryResult;
 
       const result = mapRecordsToEvents(queryResult);
@@ -104,7 +103,7 @@ describe('Transform Functions', () => {
         command: 'SELECT',
         rowCount: 0,
         oid: 0,
-        fields: []
+        fields: [],
       } as QueryResult;
 
       const result = mapRecordsToEvents(queryResult);
@@ -116,15 +115,11 @@ describe('Transform Functions', () => {
   describe('extractMaxSequenceNumber', () => {
     it('should extract max sequence number from last row', () => {
       const queryResult = {
-        rows: [
-          { sequence_number: '1' },
-          { sequence_number: '5' },
-          { sequence_number: '10' }
-        ],
+        rows: [{ sequence_number: '1' }, { sequence_number: '5' }, { sequence_number: '10' }],
         command: 'SELECT',
         rowCount: 3,
         oid: 0,
-        fields: []
+        fields: [],
       } as QueryResult<any>;
 
       const result = extractMaxSequenceNumber(queryResult);
@@ -138,7 +133,7 @@ describe('Transform Functions', () => {
         command: 'SELECT',
         rowCount: 0,
         oid: 0,
-        fields: []
+        fields: [],
       } as QueryResult<any>;
 
       const result = extractMaxSequenceNumber(queryResult);
@@ -151,7 +146,7 @@ describe('Transform Functions', () => {
     it('should prepare parameters for insert query', () => {
       const events: Event[] = [
         { eventType: 'UserCreated', payload: { data: 'test1' } },
-        { eventType: 'UserUpdated', payload: { data: 'test2' } }
+        { eventType: 'UserUpdated', payload: { data: 'test2' } },
       ];
       const contextParams = ['context1', 'context2'];
 
@@ -166,17 +161,12 @@ describe('Transform Functions', () => {
     });
 
     it('should handle events without eventVersion', () => {
-      const events: Event[] = [
-        { eventType: 'UserCreated', payload: { data: 'test1' } }
-      ];
+      const events: Event[] = [{ eventType: 'UserCreated', payload: { data: 'test1' } }];
       const contextParams: unknown[] = [];
 
       const result = prepareInsertParams(events, contextParams);
 
-      expect(result).toEqual([
-        ['UserCreated'],
-        [JSON.stringify(events[0]?.payload)],
-      ]);
+      expect(result).toEqual([['UserCreated'], [JSON.stringify(events[0]?.payload)]]);
     });
 
     it('should handle empty events array', () => {
@@ -185,11 +175,7 @@ describe('Transform Functions', () => {
 
       const result = prepareInsertParams(events, contextParams);
 
-      expect(result).toEqual([
-        'context1',
-        [],
-        []
-      ]);
+      expect(result).toEqual(['context1', [], []]);
     });
   });
 });

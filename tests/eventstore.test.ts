@@ -1,5 +1,5 @@
-import { createFilter, Event } from '../src/eventstore';
-import { PostgresEventStore } from '@ricofritzsche/eventstore-postgres';
+import { createFilter, Event } from '@lgazo/eventstore';
+import { PostgresEventStore } from '@lgazo/eventstore-postgres';
 import dotenv from 'dotenv';
 
 dotenv.config();
@@ -17,9 +17,11 @@ describe('EventStore', () => {
   let eventStore: PostgresEventStore;
 
   beforeEach(async () => {
-    eventStore= new PostgresEventStore(
-      { connectionString: process.env.DATABASE_TEST_URL || 'postgres://postgres:postgres@localhost:5432/eventstore_test' }
-    );
+    eventStore = new PostgresEventStore({
+      connectionString:
+        process.env.DATABASE_TEST_URL ||
+        'postgres://postgres:postgres@localhost:5432/eventstore_test',
+    });
 
     await eventStore.initializeDatabase();
   });
@@ -39,7 +41,7 @@ describe('EventStore', () => {
 
   it('should create filter with payload predicates', () => {
     const filter = createFilter(['TestEvent'], [{ id: '123' }]);
-    
+
     expect(filter.eventTypes).toEqual(['TestEvent']);
     expect(filter.payloadPredicates).toEqual([{ id: '123' }]);
   });
@@ -84,8 +86,9 @@ describe('EventStore', () => {
 
     it('should reject with existing state', () => {
       const state = { exists: true };
-      expect(() => decideAssetRegistration(state, '1', { test: 'data' }))
-        .toThrow('AssetAlreadyExists');
+      expect(() => decideAssetRegistration(state, '1', { test: 'data' })).toThrow(
+        'AssetAlreadyExists'
+      );
     });
   });
 });

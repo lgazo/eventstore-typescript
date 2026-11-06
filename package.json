@@ -1,64 +1,38 @@
 {
-  "name": "@ricofritzsche/eventstore",
-  "version": "1.1.0",
-  "description": "A TypeScript event sourcing library with Postgres persistence, real-time subscriptions, and projection support for building responsive event-sourced applications",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
-  "files": [
-    "dist/**/*",
-    "README.md",
-    "LICENSE"
-  ],
+  "name": "eventstore-typescript",
+  "private": true,
   "workspaces": [
     "packages/*"
   ],
   "scripts": {
     "build": "npm run build:core && npm run build:postgres && npm run build:d1 && npm run build:supabase",
-    "build:core": "tsc",
-    "build:postgres": "npm run build -w ./packages/postgres",
-    "build:d1": "npm run build -w ./packages/d1",
-    "build:watch": "tsc --watch",
-    "clean": "rm -rf dist packages/postgres/dist packages/d1/dist packages/supabase/dist",
-    "dev": "ts-node src/index.ts",
-    "example": "ts-node -r tsconfig-paths/register src/examples/banking/cli.ts",
+    "build:core": "npm run build -w @lgazo/eventstore",
+    "build:postgres": "npm run build -w @lgazo/eventstore-postgres",
+    "build:d1": "npm run build -w @lgazo/eventstore-d1",
+    "build:supabase": "npm run build -w @lgazo/eventstore-supabase",
+    "build:watch": "npm run build -w @lgazo/eventstore -- --watch",
+    "clean": "rm -rf packages/*/dist",
+    "dev": "ts-node -r tsconfig-paths/register packages/core/src/index.ts",
+    "example": "ts-node -r tsconfig-paths/register packages/core/src/examples/banking/cli.ts",
     "simple": "ts-node -r tsconfig-paths/register simple.ts",
     "supabase:sql": "ts-node -r tsconfig-paths/register scripts/generate-supabase-setup-sql.ts",
     "test": "jest",
     "test:supabase:scenario": "jest --runInBand tests/supabase.scenario.test.ts",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
-    "lint": "eslint src/**/*.ts",
-    "lint:fix": "eslint src/**/*.ts --fix",
-    "format": "prettier --write src/**/*.ts",
-    "format:check": "prettier --check src/**/*.ts",
-    "prepublishOnly": "npm run clean && npm run build && npm run test",
-    "prepack": "npm run build",
-    "build:supabase": "npm run build -w ./packages/supabase"
+    "lint": "eslint 'packages/**/src/**/*.ts' 'tests/**/*.ts' --no-warn-ignored",
+    "lint:fix": "eslint 'packages/**/src/**/*.ts' 'tests/**/*.ts' --no-warn-ignored --fix",
+    "format": "prettier --write 'packages/**/src/**/*.ts' 'tests/**/*.ts'",
+    "format:check": "prettier --check 'packages/**/src/**/*.ts' 'tests/**/*.ts'",
+    "version:lockstep": "node scripts/lockstep-version.mjs"
   },
-  "keywords": [
-    "eventstore",
-    "event-sourcing",
-    "eventsourcing",
-    "typescript",
-    "events",
-    "postgresql",
-    "postgres",
-    "real-time",
-    "subscriptions",
-    "projections",
-    "event-driven",
-    "cqrs"
-  ],
-  "author": "Rico Fritzsche",
-  "contributors": [
-    "Ralf Westphal"
-  ],
   "license": "MIT",
   "devDependencies": {
     "@types/jest": "^29.5.0",
     "@types/node": "^24.19.2",
     "@typescript-eslint/eslint-plugin": "^8.0.0",
     "@typescript-eslint/parser": "^8.0.0",
+    "dotenv": "^17.0.1",
     "eslint": "^9.0.0",
     "eslint-config-prettier": "^9.0.0",
     "eslint-plugin-prettier": "^5.0.0",
@@ -68,10 +42,7 @@
     "ts-jest": "^29.2.0",
     "ts-node": "^10.9.0",
     "tsconfig-paths": "^4.2.0",
-    "typescript": "^5.0.0"
-  },
-  "dependencies": {
-    "dotenv": "^17.0.1",
+    "typescript": "^5.0.0",
     "uuid": "^11.1.0"
   },
   "engines": {
@@ -82,10 +53,10 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/ricofritzsche/eventstore-typescript"
+    "url": "git+https://github.com/lgazo/eventstore-typescript.git"
   },
   "bugs": {
-    "url": "https://github.com/ricofritzsche/eventstore-typescript/issues"
+    "url": "https://github.com/lgazo/eventstore-typescript/issues"
   },
-  "homepage": "https://github.com/ricofritzsche/eventstore-typescript#readme"
+  "homepage": "https://github.com/lgazo/eventstore-typescript#readme"
 }

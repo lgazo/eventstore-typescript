@@ -1,4 +1,4 @@
-import { EventRecord } from '@ricofritzsche/eventstore';
+import { EventRecord } from '@lgazo/eventstore';
 
 export interface EventRow {
   sequence_number: number;
@@ -8,8 +8,7 @@ export interface EventRow {
 }
 
 export function deserializeEvent(row: EventRow): EventRecord {
-  const payload =
-    typeof row.payload === 'string' ? JSON.parse(row.payload) : row.payload;
+  const payload = typeof row.payload === 'string' ? JSON.parse(row.payload) : row.payload;
 
   return {
     sequenceNumber: Number(row.sequence_number),

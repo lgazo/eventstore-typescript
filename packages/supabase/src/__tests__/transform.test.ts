@@ -17,12 +17,13 @@ describe('Supabase transform', () => {
   });
 
   it('rejects unsafe sequence numbers', () => {
-    expect(() => deserializeEvent({
-      sequence_number: '9007199254740992',
-      occurred_at: '2024-01-02T03:04:05.000Z',
-      event_type: 'AccountOpened',
-      payload: { accountId: 'a1' },
-    })).toThrow('eventstore-stores-supabase-err09');
+    expect(() =>
+      deserializeEvent({
+        sequence_number: '9007199254740992',
+        occurred_at: '2024-01-02T03:04:05.000Z',
+        event_type: 'AccountOpened',
+        payload: { accountId: 'a1' },
+      })
+    ).toThrow('eventstore-stores-supabase-err09');
   });
 });
-

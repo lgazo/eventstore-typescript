@@ -1,5 +1,5 @@
 import { QueryResult } from 'pg';
-import { EventRecord, Event } from '@ricofritzsche/eventstore';
+import { EventRecord, Event } from '@lgazo/eventstore';
 
 function toSequenceNumber(value: unknown): number {
   const parsed = typeof value === 'number' ? value : Number(value);
@@ -17,8 +17,14 @@ function toTimestamp(value: unknown): Date {
   return parsed;
 }
 
+export interface EventRow {
+  sequence_number?: unknown;
+  occurred_at?: unknown;
+  event_type: string;
+  payload: string | Record<string, unknown>;
+}
 
-export function deserializeEvent(row: any): EventRecord {
+export function deserializeEvent(row: EventRow): EventRecord {
   return {
     sequenceNumber: toSequenceNumber(row.sequence_number),
     timestamp: toTimestamp(row.occurred_at),
@@ -27,31 +33,23 @@ export function deserializeEvent(row: any): EventRecord {
   };
 }
 
-
-export function mapRecordsToEvents(result: QueryResult<any>): EventRecord[] {
-  return result.rows.map(row => deserializeEvent(row));
+export function mapRecordsToEvents(result: QueryResult<EventRow>): EventRecord[] {
+  return result.rows.map((row) => deserializeEvent(row));
 }
 
-export function extractMaxSequenceNumber(result: QueryResult<any>): number {
+export function extractMaxSequenceNumber(result: QueryResult<EventRow>): number {
   const lastRow = result.rows[result.rows.length - 1];
-  return lastRow ? parseInt(lastRow.sequence_number, 10) : 0;
+  return lastRow ? parseInt(String(lastRow.sequence_number), 10) : 0;
 }
-
 
 export function prepareInsertParams(events: Event[], contextParams: unknown[]): unknown[] {
   const eventTypes: string[] = [];
-  const eventVersions: string[] = [];
   const payloads: string[] = [];
-  const metadata: string[] = [];
 
   for (const event of events) {
     eventTypes.push(event.eventType);
     payloads.push(JSON.stringify(event.payload));
   }
 
-  return [
-    ...contextParams,
-    eventTypes,
-    payloads,
-  ];
+  return [...contextParams, eventTypes, payloads];
 }

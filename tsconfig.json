@@ -3,8 +3,6 @@
     "target": "ES2020",
     "module": "commonjs",
     "lib": ["ES2020"],
-    "outDir": "./dist",
-    "rootDir": "./src",
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
@@ -27,24 +25,14 @@
     "emitDecoratorMetadata": true,
     "baseUrl": ".",
     "paths": {
-      "@ricofritzsche/eventstore": ["src/index.ts"],
-      "@ricofritzsche/eventstore/*": ["src/*"],
-      "@ricofritzsche/eventstore-postgres": ["packages/postgres/src"],
-      "@ricofritzsche/eventstore-postgres/*": ["packages/postgres/src/*"],
-      "@ricofritzsche/eventstore-supabase": ["packages/supabase/src"],
-      "@ricofritzsche/eventstore-supabase/*": ["packages/supabase/src/*"],
-      "@ricofritzsche/eventstore-d1": ["packages/d1/src"],
-      "@ricofritzsche/eventstore-d1/*": ["packages/d1/src/*"]
+      "@lgazo/eventstore": ["packages/core/src/index.ts"],
+      "@lgazo/eventstore/*": ["packages/core/src/*"],
+      "@lgazo/eventstore-postgres": ["packages/postgres/src"],
+      "@lgazo/eventstore-postgres/*": ["packages/postgres/src/*"],
+      "@lgazo/eventstore-supabase": ["packages/supabase/src"],
+      "@lgazo/eventstore-supabase/*": ["packages/supabase/src/*"],
+      "@lgazo/eventstore-d1": ["packages/d1/src"],
+      "@lgazo/eventstore-d1/*": ["packages/d1/src/*"]
     }
-  },
-  "include": [
-    "src/eventstore/**/*",
-    "src/index.ts"
-  ],
-  "exclude": [
-    "node_modules",
-    "dist",
-    "**/*.test.ts",
-    "**/*.spec.ts",
-  ]
+  }
 }

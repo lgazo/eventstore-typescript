@@ -1,7 +1,7 @@
 {
-  "name": "@ricofritzsche/eventstore-supabase",
-  "version": "1.1.0",
-  "description": "Supabase-backed store for @ricofritzsche/eventstore",
+  "name": "@lgazo/eventstore-supabase",
+  "version": "1.2.0",
+  "description": "Supabase-backed store for @lgazo/eventstore",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [
@@ -26,17 +26,20 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/ricofritzsche/eventstore-typescript"
+    "url": "git+https://github.com/lgazo/eventstore-typescript.git"
   },
   "bugs": {
-    "url": "https://github.com/ricofritzsche/eventstore-typescript/issues"
+    "url": "https://github.com/lgazo/eventstore-typescript/issues"
   },
-  "homepage": "https://github.com/ricofritzsche/eventstore-typescript#readme",
+  "homepage": "https://github.com/lgazo/eventstore-typescript#readme",
   "dependencies": {
     "@supabase/supabase-js": "^2.57.4",
-    "@ricofritzsche/eventstore": "lgazo/eventstore-typescript#main"
+    "@lgazo/eventstore": "^1.2.0"
   },
   "engines": {
     "node": ">=18.19.0"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }

@@ -1,4 +1,4 @@
-import { 
+import {
   createDatabaseQuery,
   changeDatabaseInConnectionString,
   getDatabaseNameFromConnectionString,
@@ -10,7 +10,7 @@ import {
   createEventTypeIndexSql,
   createOccurredAtIndexSql,
   createPayloadGinIndexSql,
-  createTenantSequenceIndexSql
+  createTenantSequenceIndexSql,
 } from '../schema';
 
 describe('Schema Functions', () => {

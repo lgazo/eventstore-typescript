@@ -1,4 +1,4 @@
-import { createFilter, createQuery } from '@ricofritzsche/eventstore';
+import { createFilter, createQuery } from '@lgazo/eventstore';
 import { SupabaseClientLike, SupabaseEventStore, parseSupabaseConnectionString } from '../store';
 
 class MockRealtimeChannel {
@@ -36,12 +36,22 @@ class MockSupabaseClient implements SupabaseClientLike {
   lastRpcCall: { fn: string; args: Record<string, unknown> } | null = null;
   readonly channelInstance = new MockRealtimeChannel();
 
-  async rpc<T>(fn: string, args: Record<string, unknown>): Promise<{ data: T | null; error: { message: string } | null }> {
+  async rpc<T>(
+    fn: string,
+    args: Record<string, unknown>
+  ): Promise<{ data: T | null; error: { message: string } | null }> {
     this.lastRpcCall = { fn, args };
     return { data: this.rpcData as T, error: this.rpcError };
   }
 
-  from<T>(_table: string): { select(columns: string): { order(column: string, options: { ascending: boolean }): Promise<{ data: T[] | null; error: { message: string } | null }> } } {
+  from<T>(_table: string): {
+    select(columns: string): {
+      order(
+        column: string,
+        options: { ascending: boolean }
+      ): Promise<{ data: T[] | null; error: { message: string } | null }>;
+    };
+  } {
     return {
       select: (_columns: string) => ({
         order: async (_column: string, _options: { ascending: boolean }) => ({
@@ -73,8 +83,20 @@ describe('SupabaseEventStore', () => {
   it('queries and filters events client-side', async () => {
     const client = new MockSupabaseClient();
     client.rows = [
-      { sequence_number: 1, tenant_id: null, occurred_at: '2024-01-01T00:00:00.000Z', event_type: 'A', payload: { id: 1 } },
-      { sequence_number: 2, tenant_id: null, occurred_at: '2024-01-01T00:01:00.000Z', event_type: 'B', payload: { id: 2 } },
+      {
+        sequence_number: 1,
+        tenant_id: null,
+        occurred_at: '2024-01-01T00:00:00.000Z',
+        event_type: 'A',
+        payload: { id: 1 },
+      },
+      {
+        sequence_number: 2,
+        tenant_id: null,
+        occurred_at: '2024-01-01T00:01:00.000Z',
+        event_type: 'B',
+        payload: { id: 2 },
+      },
     ];
 
     const store = new SupabaseEventStore({ client, tableName: 'events_spa' });
@@ -88,7 +110,13 @@ describe('SupabaseEventStore', () => {
   it('append without explicit filter sends deterministic expected max args', async () => {
     const client = new MockSupabaseClient();
     client.rpcData = [
-      { sequence_number: 1, tenant_id: null, occurred_at: '2024-01-01T00:00:00.000Z', event_type: 'A', payload: { id: 1 } },
+      {
+        sequence_number: 1,
+        tenant_id: null,
+        occurred_at: '2024-01-01T00:00:00.000Z',
+        event_type: 'A',
+        payload: { id: 1 },
+      },
     ];
 
     const store = new SupabaseEventStore({ client, tableName: 'events_spa', useRealtime: false });
@@ -106,11 +134,29 @@ describe('SupabaseEventStore', () => {
   it('scopes query and append by tenantId when configured', async () => {
     const client = new MockSupabaseClient();
     client.rows = [
-      { sequence_number: 1, tenant_id: 'tenant-1', occurred_at: '2024-01-01T00:00:00.000Z', event_type: 'A', payload: { id: 1 } },
-      { sequence_number: 2, tenant_id: 'tenant-2', occurred_at: '2024-01-01T00:01:00.000Z', event_type: 'A', payload: { id: 2 } },
+      {
+        sequence_number: 1,
+        tenant_id: 'tenant-1',
+        occurred_at: '2024-01-01T00:00:00.000Z',
+        event_type: 'A',
+        payload: { id: 1 },
+      },
+      {
+        sequence_number: 2,
+        tenant_id: 'tenant-2',
+        occurred_at: '2024-01-01T00:01:00.000Z',
+        event_type: 'A',
+        payload: { id: 2 },
+      },
     ];
     client.rpcData = [
-      { sequence_number: 3, tenant_id: 'tenant-1', occurred_at: '2024-01-01T00:02:00.000Z', event_type: 'A', payload: { id: 3 } },
+      {
+        sequence_number: 3,
+        tenant_id: 'tenant-1',
+        occurred_at: '2024-01-01T00:02:00.000Z',
+        event_type: 'A',
+        payload: { id: 3 },
+      },
     ];
 
     const store = new SupabaseEventStore({ client, tableName: 'events_spa', tenantId: 'tenant-1' });
@@ -125,8 +171,20 @@ describe('SupabaseEventStore', () => {
   it('shared mode only sees rows with tenant_id NULL', async () => {
     const client = new MockSupabaseClient();
     client.rows = [
-      { sequence_number: 1, tenant_id: null, occurred_at: '2024-01-01T00:00:00.000Z', event_type: 'A', payload: { id: 1 } },
-      { sequence_number: 2, tenant_id: 'tenant-2', occurred_at: '2024-01-01T00:01:00.000Z', event_type: 'A', payload: { id: 2 } },
+      {
+        sequence_number: 1,
+        tenant_id: null,
+        occurred_at: '2024-01-01T00:00:00.000Z',
+        event_type: 'A',
+        payload: { id: 1 },
+      },
+      {
+        sequence_number: 2,
+        tenant_id: 'tenant-2',
+        occurred_at: '2024-01-01T00:01:00.000Z',
+        event_type: 'A',
+        payload: { id: 2 },
+      },
     ];
 
     const store = new SupabaseEventStore({ client, tableName: 'events_spa' });
