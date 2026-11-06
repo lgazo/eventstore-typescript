@@ -29,11 +29,11 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Lint, format check, build
+      - name: Build, lint, format check
         run: |
+          npm run build
           npm run lint
           npm run format:check
-          npm run build
 
       # All packages share one lockstep version; a tag (v*) must match it.
       - name: Verify lockstep versions

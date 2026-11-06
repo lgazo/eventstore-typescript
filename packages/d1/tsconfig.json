@@ -24,16 +24,7 @@
     "exactOptionalPropertyTypes": true,
     "resolveJsonModule": true,
     "moduleResolution": "node",
-    "allowSyntheticDefaultImports": true,
-    "baseUrl": ".",
-    "paths": {
-      "@lgazo/eventstore": [
-        "../../core/dist/index"
-      ],
-      "@lgazo/eventstore/*": [
-        "../../core/dist/*"
-      ]
-    }
+    "allowSyntheticDefaultImports": true
   },
   "include": [
     "src/**/*.ts"
