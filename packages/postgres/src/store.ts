@@ -257,6 +257,12 @@ export class PostgresEventStore implements EventStore {
         console.log(
           `eventstore-stores-postgres-err06: Database already exists: ${this.databaseName}`
         );
+      } else if (err.code === '42501') {
+        // Managed Postgres role lacks CREATEDB; the target database is
+        // pre-provisioned, so fall through to createTableAndIndexes().
+        console.log(
+          `eventstore-stores-postgres-err06: no CREATEDB permission, assuming ${this.databaseName} already exists: ${err.message}`
+        );
       } else {
         throw err;
       }
